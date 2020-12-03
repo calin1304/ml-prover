@@ -6,7 +6,7 @@ import Data.Char (chr)
 %wrapper "monad"
 
 $whitechar = [ \t\n\r\f\v]
-$special   = [\;\`\{\}]
+$special   = [\:\(\)\,\;\[\]\`\{\}]
 
 $ascdigit  = 0-9
 $digit     = [$ascdigit]
@@ -24,9 +24,9 @@ $idchar    = [$alpha $digit \'\-]
 $symchar   = [$symbol \:]
 $nl        = [\n\r]
 
-@keyword = imports|from|derive|rule
+@keyword = module|endmodule|meta\-symbol|notation|SetVar|ElemVar
 
-@reservedop = ".." | ":" | "::" | "=" | \\ | "|" | "<-" | "->" | "@" | "~" | "=>"
+@reservedop = ":="
 
 @varid  = [$small \#] $idchar*
 @conid  = $large $idchar*
@@ -50,28 +50,15 @@ haskell :-
 <0> $white+			{ skip }
 <0> "--"\-*[^$symbol].*		{ skip }
 
-<0> $special			                      { mkL LSpecial }
-<0> module      	                          { mkL LModule }
-<0> endmodule	                              { mkL LEndModule }
-<0> meta\-symbol	                          { mkL LMetaSym }
-<0> \[                                        { mkL LLBracket }
-<0> \]                                        { mkL LRBracket }
-<0> \(                                        { mkL LLParan }
-<0> \)                                        { mkL LRParan }
-<0> \,                                        { mkL LComma}
-<0> @keyword			                      { mkL LKeyword }
-<0> @conid \. @varid		                  { mkL LQVarId }
-<0> @conid \. @conid		                  { mkL LQConId }
-<0> @varid			                          { mkNamedL LVarId }
-<0> @conid			                          { mkNamedL LConId }
-<0> @reservedop			                      { mkL LReservedOp }
-<0> @conid \. @varsym		                  { mkL LVarSym }
-<0> @conid \. @consym		                  { mkL LConSym }
+<0> $special			                      { mkCharL LSpecial }
+<0> @keyword			                      { mkStringL LKeyword }
+<0> @varid			                          { mkStringL LVarId }
+<0> @conid			                          { mkStringL LConId }
+<0> @reservedop			                      { mkStringL LReservedOp }
 <0> @varsym			                          { mkL LVarSym }
-<0> @consym			                          { mkL LConSym }
 <0> @decimal                                  { readL LInteger }
-<0> \' ($graphic # [\'\\] | " " | @escape) \' { mkL LChar }
-<0> \" @string* \"		                      { mkL LString }
+<0> \' ($graphic # [\'\\] | " " | @escape) \' { mkCharL LChar }
+<0> \" @string* \"		                      { mkStringL LString }
 
 {
 data Lexeme = L AlexPosn LexemeClass String 
@@ -80,11 +67,11 @@ data Lexeme = L AlexPosn LexemeClass String
 data LexemeClass =
     LInteger Int
   | LFloat
-  | LChar
-  | LString
-  | LSpecial
-  | LKeyword
-  | LReservedOp
+  | LChar Char
+  | LString String
+  | LSpecial Char
+  | LKeyword String
+  | LReservedOp String
   | LVarId String
   | LQVarId
   | LConId String
@@ -93,14 +80,10 @@ data LexemeClass =
   | LQVarSym
   | LConSym
   | LQConSym
-  | LModule
-  | LEndModule
-  | LMetaSym
   | LLBracket
   | LRBracket
   | LLParan
   | LRParan
-  | LComma
   | LEOF 
   deriving (Show, Eq)
   
@@ -117,8 +100,11 @@ mapL f c (p, _, _, str) len = pure $ L p c' str
   where
     c' = c . f $ take len str
 
-mkNamedL :: (String -> LexemeClass) -> AlexInput -> Int -> Alex Lexeme
-mkNamedL = mapL id
+mkStringL :: (String -> LexemeClass) -> AlexInput -> Int -> Alex Lexeme
+mkStringL = mapL id
+
+mkCharL :: (Char -> LexemeClass) -> AlexInput -> Int -> Alex Lexeme
+mkCharL c (p, _, _, str) _ = pure . L p (c $ head str) $ take 1 str
 
 lexError s = do
     (p,c,_,input) <- alexGetInput
