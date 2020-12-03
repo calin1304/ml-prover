@@ -1,10 +1,10 @@
 name:                ml-parser
 version:             0.1.0.0
-github:              "githubuser/ml-parser"
+github:              "calin1304/ml-parser"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2020 Author name here"
+author:              "Calin Nicolau"
+maintainer:          "calin.nicolau@gmail.com"
+copyright:           "2020 Calin Nicolau"
 
 extra-source-files:
 - README.md
@@ -17,10 +17,11 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/ml-parser#readme>
+description:         Please see the README on GitHub at <https://github.com/calin1304/ml-parser#readme>
 
 dependencies:
 - base >= 4.7 && < 5
+- array
 
 build-tools:
 - alex
