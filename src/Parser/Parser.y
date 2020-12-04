@@ -3,6 +3,7 @@ module Parser.Parser (parser) where
 
 import Parser.Lexer
 import Parser.Syntax
+import Text.Printf (printf)
 }
 
 %name parser
@@ -18,7 +19,18 @@ import Parser.Syntax
     metaSym   { LKeyword "meta-symbol" }
     notation  { LKeyword "notation" }
     setVar    { LKeyword "SetVar" }
-    elemVar   { LKeyword "ElemVar" }
+    elemVar   { LKeyword "Var" }
+    imports   { LKeyword "imports" }
+    rule      { LKeyword "rule" }
+    from      { LKeyword "from" }
+    derive    { LKeyword "derive" }
+    lemma     { LKeyword "lemma" }
+    proof     { LKeyword "proof" }
+    qed       { LKeyword "qed" }
+    intros    { LKeyword "intros" }
+    specialize { LKeyword "specialize"}
+    apply     { LKeyword "apply"}
+    as        { LKeyword "as" }
     '['       { LSpecial '[' }
     ']'       { LSpecial ']' }
     '('       { LSpecial '(' }
@@ -29,7 +41,14 @@ import Parser.Syntax
 
 %%
 
-Mod :: { ModDef }
+Source :: { Source }
+    : ModDefs { Source (reverse $1) }
+
+ModDefs :: { [ModDef] }
+    : {- empty -} { [] }
+    | ModDefs ModDef { $2 : $1 }
+
+ModDef :: { ModDef }
   : module conId Exprs endmodule { ModDef $2 $3 }
 
 Exprs :: { [Expr] } 
@@ -38,7 +57,32 @@ Exprs :: { [Expr] }
 
 Expr :: { Expr }
   : metaSym varId '[' Attrs ']' { MetaSym $2 $4 }
-  | notation varId Signature ":=" Application '[' Attrs ']' { Notation $2 $3 $5 $7 }
+  | notation varId Signature ":=" SimpleExpr '[' Attrs ']' { Notation $2 $3 $5 $7 }
+  | imports conId { Import $2 }
+  | rule varId RuleBinders ":=" from '[' RulePres ']' derive SimpleExpr  { Rule $2 $3 $7 $10}
+  | lemma varId RuleBinders ":=" from '[' RulePres ']' derive SimpleExpr Proof { Lemma $2 $3 $7 $10 $11 }
+
+Proof :: { [Tactic] }
+    : proof Tactics qed { $2 }
+
+Tactics :: { [Tactic] }
+    : Tactic { [$1] }
+    | Tactics Tactic { $2 : $1 }
+
+Tactic :: { Tactic }
+    : intros conId { Intros $2 }
+    | specialize Application as conId { Specialize $2 $4 }
+    | apply Application { Apply $2 }
+
+
+RuleBinders :: { [String] }
+    : conId { [$1]}
+    | RuleBinders conId { $2 : $1 }
+
+RulePres :: { [SimpleExpr] }
+    : {- empty -} { [] }
+    | SimpleExpr { [$1] }
+    | RulePres ',' SimpleExpr { $3 : $1 }
 
 Signature :: { Signature }
   : {- empty -}  { NoSignature }
@@ -70,16 +114,20 @@ VarType :: { VarType }
   : setVar  { mkVarType $1 }
   | elemVar { mkVarType $1 }
 
-Application :: { Application }
-  : varId ApplicationArgs { Application $1 $2 }
+SimpleExpr :: { SimpleExpr }
+  : varId { EVar $1 }
+  | conId { SVar $1 }
+  | Application { $1 }
+  | '(' SimpleExpr ')' { $2 }
 
-ApplicationArgs :: { [String] }
-  : {- empty -} { [] }
-  | ApplicationArg ApplicationArgs { $1 : $2 }
+Application :: { SimpleExpr }
+    : varId ApplicationArgs { Application $1 $2 }
+    | conId ApplicationArgs { Application $1 $2 }
+    | '(' Application ')' { $2 }
 
-ApplicationArg :: { String }
-  : varId { $1 }
-  | conId { $1 }
+ApplicationArgs :: { [SimpleExpr] }
+  : SimpleExpr { [$1] }
+  | ApplicationArgs SimpleExpr { reverse $ $2 : $1 }
 
 Attrs :: { [SymAttr] }
   : {- empty -} { [] }
@@ -102,5 +150,6 @@ AttrArg :: { Int }
   : integer { $1 }
 
 {
-parserError (x:xs) = error $ "Error at token: " ++ show x
+parserError :: [LexemeClass] -> a
+parserError (x:xs) = error $ printf "Error at token: %s (%d from end)" (show x) (length xs)
 }

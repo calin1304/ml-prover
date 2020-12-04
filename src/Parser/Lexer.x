@@ -20,16 +20,16 @@ $alpha     = [$small $large]
 
 $graphic   = [$small $large $symbol $digit $special \:\"\']
 
-$idchar    = [$alpha $digit \'\-]
+$idchar    = [$alpha $digit \'\-\_]
 $symchar   = [$symbol \:]
 $nl        = [\n\r]
 
-@keyword = module|endmodule|meta\-symbol|notation|SetVar|ElemVar
+@keyword = module|endmodule|imports|meta\-symbol|notation|rule|from|derive|lemma|intros|proof|qed|specialize|apply|as|SetVar|Var
 
 @reservedop = ":="
 
-@varid  = [$small \#] $idchar*
-@conid  = $large $idchar*
+@varid  = [$small \#\_] $idchar*
+@conid  = [$large \_] $idchar*
 @varsym = $symbol $symchar*
 @consym = \: $symchar*
 
@@ -47,9 +47,8 @@ $charesc = [abfnrtv\\\"\'\&]
 
 haskell :-
 
-<0> $white+			{ skip }
-<0> "--"\-*[^$symbol].*		{ skip }
-
+<0> $white+			                          { skip }
+<0> "--"\-*[^$symbol].*		                  { skip }
 <0> $special			                      { mkCharL LSpecial }
 <0> @keyword			                      { mkStringL LKeyword }
 <0> @varid			                          { mkStringL LVarId }
