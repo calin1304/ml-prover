@@ -1,10 +1,16 @@
 module Main where
 
+import System.Environment
+import Text.Printf
+
 import Parser.Lexer (scanner)
 import Parser.Parser (parser)
 
 main :: IO ()
-main = do
-    s <- readFile "doc/examples/simple.ml"
-    print $ scanner s
-    print . fmap parser $ scanner s
+main =
+    getArgs >>= readFile . head >>= \s -> do
+        let lexemes = scanner s
+        printf
+            "\nLexer output\n----\n%s\n----\n\nParser output\n----\n%s\n----\n"
+            (show lexemes)
+            (show $ fmap parser lexemes)

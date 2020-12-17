@@ -31,8 +31,13 @@ data SimpleExpr =
 
 data Signature =
     NoSignature
-  | Signature [ArgType]
+  | Signature [Argument]
   | SignatureNames [String]
+    deriving (Show)
+
+data Argument =
+    Name String
+  | WithType String VarType
     deriving (Show)
 
 data ArgType = ArgType String VarType
