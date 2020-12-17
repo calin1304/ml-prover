@@ -10,6 +10,8 @@ import Text.Printf (printf)
 %tokentype { LexemeClass }
 %error { parserError }
 
+-- TODO: Add separate evarId and svarId
+
 %token
     integer   { LInteger $$ }
     conId     { LConId $$ }
@@ -74,7 +76,6 @@ Tactic :: { Tactic }
     | specialize Application as conId { Specialize $2 $4 }
     | apply Application { Apply $2 }
 
-
 RuleBinders :: { [String] }
     : conId { [$1]}
     | RuleBinders conId { $2 : $1 }
@@ -85,30 +86,21 @@ RulePres :: { [SimpleExpr] }
     | RulePres ',' SimpleExpr { $3 : $1 }
 
 Signature :: { Signature }
-  : {- empty -}  { NoSignature }
-  | '(' SignatureList ')' { Signature $2 }
-  | SignatureNamesList { SignatureNames $1 }
+  : {- empty -}        { NoSignature }
+  | SignatureList      { Signature $1 }
 
-SignatureNamesList :: { [String] }
-  : varId SignatureNamesList1 { $1 : $2 }
-  | conId SignatureNamesList1 { $1 : $2 }
-
-SignatureNamesList1 :: { [String] }
+SignatureList :: { [Argument] }
   : {- empty -} { [] }
-  | varId SignatureNamesList1 { $1 : $2 } 
-  | conId SignatureNamesList1 { $1 : $2 }
+  | SignatureList '(' TypedArg ')' { $3 : $1 }
+  | SignatureList UntypedArg { $2 : $1 }
 
-SignatureList :: { [ArgType] }
-  : {- empty -} { [] }
-  | ArgType SignatureList1 { $1 : $2 }
+TypedArg :: { Argument }
+  : varId ':' VarType { Argument $1 $3 }
+  | conId ':' VarType { Argument $1 $3 }
 
-SignatureList1 :: { [ArgType] }
-  : {- empty -} { [] }
-  | ',' ArgType SignatureList { $2 : $3 } 
-
-ArgType :: { ArgType }
-  : varId ':' VarType { ArgType $1 $3 }
-  | conId ':' VarType { ArgType $1 $3 }
+UntypedArg :: { Argument }
+  : varId { Argument $1 ElemVar }
+  | conId { Argument $1 SetVar }
 
 VarType :: { VarType }
   : setVar  { mkVarType $1 }
@@ -130,24 +122,17 @@ ApplicationArgs :: { [SimpleExpr] }
   | ApplicationArgs SimpleExpr { reverse $ $2 : $1 }
 
 Attrs :: { [SymAttr] }
-  : {- empty -} { [] }
-  | varId '(' AttrArgs ')' Attrs1 { mkAttr $1 $3 : $5}
-  | varId  Attrs1                 { mkAttr $1 [] : $2}
+  : {- empty -}           { [] }
+  | varId Attrs1          { mkAttr $1 [] : $2}
+  | varId AttrArgs Attrs1 { mkAttr $1 $2 : $3}
 
 Attrs1 :: { [SymAttr] }
   : {- empty -} { [] }
   | ',' Attrs   { $2 }
 
 AttrArgs :: { [Int] }
-  : {- empty -} { [] }
-  | AttrArg AttrArgs1 { $1 : $2 }
-
-AttrArgs1 :: { [Int] }
-  : {- empty -} { [] }
-  | ',' AttrArg AttrArgs1 { $2 : $3 }
-
-AttrArg :: { Int }
-  : integer { $1 }
+  : {- empty -}       { [] }
+  | AttrArgs integer { reverse ($2 : $1) }
 
 {
 parserError :: [LexemeClass] -> a
