@@ -17,9 +17,10 @@ data Expr =
     deriving (Show)
 
 data Tactic = 
-    Intros String
+    Intros [String]
   | Specialize SimpleExpr String
-  | Apply SimpleExpr
+  | Apply SimpleExpr (Maybe String)
+  | Exact String
     deriving (Show)
 
 data SimpleExpr =

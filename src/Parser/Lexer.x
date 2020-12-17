@@ -24,7 +24,8 @@ $idchar    = [$alpha $digit \'\-\_]
 $symchar   = [$symbol \:]
 $nl        = [\n\r]
 
-@keyword = module|endmodule|imports|meta\-symbol|notation|rule|from|derive|lemma|intros|proof|qed|specialize|apply|as|SetVar|Var
+@tacticsIds = intros|specialize|apply|exact
+@keyword = @tacticsIds|module|endmodule|imports|meta\-symbol|notation|rule|from|derive|lemma|proof|qed|as|SetVar|Var
 
 @reservedop = ":="
 

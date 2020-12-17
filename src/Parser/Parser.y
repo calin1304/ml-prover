@@ -32,6 +32,7 @@ import Text.Printf (printf)
     intros    { LKeyword "intros" }
     specialize { LKeyword "specialize"}
     apply     { LKeyword "apply"}
+    exact     { LKeyword "exact"}
     as        { LKeyword "as" }
     '['       { LSpecial '[' }
     ']'       { LSpecial ']' }
@@ -61,8 +62,8 @@ Expr :: { Expr }
   : metaSym varId '[' Attrs ']' { MetaSym $2 $4 }
   | notation varId Signature ":=" SimpleExpr '[' Attrs ']' { Notation $2 $3 $5 $7 }
   | imports conId { Import $2 }
-  | rule varId RuleBinders ":=" from '[' RulePres ']' derive SimpleExpr  { Rule $2 $3 $7 $10}
-  | lemma varId RuleBinders ":=" from '[' RulePres ']' derive SimpleExpr Proof { Lemma $2 $3 $7 $10 $11 }
+  | rule varId ConIds ":=" from '[' RulePres ']' derive SimpleExpr  { Rule $2 $3 $7 $10}
+  | lemma varId ConIds ":=" from '[' RulePres ']' derive SimpleExpr Proof { Lemma $2 $3 $7 $10 $11 }
 
 Proof :: { [Tactic] }
     : proof Tactics qed { $2 }
@@ -72,18 +73,20 @@ Tactics :: { [Tactic] }
     | Tactics Tactic { $2 : $1 }
 
 Tactic :: { Tactic }
-    : intros conId { Intros $2 }
+    : intros ConIds { Intros (reverse $2) }
     | specialize Application as conId { Specialize $2 $4 }
-    | apply Application { Apply $2 }
-
-RuleBinders :: { [String] }
-    : conId { [$1]}
-    | RuleBinders conId { $2 : $1 }
+    | apply Application as conId { Apply $2 (Just $4) }
+    | apply Application { Apply $2 Nothing }
+    | exact conId { Exact $2 }
 
 RulePres :: { [SimpleExpr] }
     : {- empty -} { [] }
     | SimpleExpr { [$1] }
     | RulePres ',' SimpleExpr { $3 : $1 }
+
+ConIds :: { [String] }
+    : {- empty -} { [] }
+    | ConIds conId { $2 : $1 }
 
 Signature :: { Signature }
   : {- empty -}        { NoSignature }
