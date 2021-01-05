@@ -12,6 +12,7 @@ module ML-PROPOSITIONAL-LOGIC
   rule modus_ponens P Q :=
     from [P, (impl P Q)]
     derive Q
+
   lemma a2i P Q R :=
     from [impl (P (impl Q R))]
     derive (impl (impl P Q) (impl Q R))
@@ -20,6 +21,7 @@ module ML-PROPOSITIONAL-LOGIC
     specialize (a2 P Q R) as H2
     apply (modus_ponens H1 H2)
   qed
+  
   lemma mpd P Q R :=
     from [(impl P Q), (impl P (impl Q R))]
     derive (impl P R)
