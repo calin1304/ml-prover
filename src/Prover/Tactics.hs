@@ -2,17 +2,19 @@ module Prover.Tactics where
 
 import Language.Syntax
 
+import Control.Monad.State
+
 import Prover.ProofM
 import Prover.State
+import Prover.Types
+import Utils
 
-intros = undefined
-
--- intros :: Name -> ProofM ()
--- intros asName = do
---     (pre, rest) <- gets (splitAt 1 . premises) --TODO: Use total head
---     modify $ \st ->
---         let env' = (asName, head pre) : env st
---          in st { env = env', premises = rest }
+intros :: Name -> ProofM ()
+intros asName = do
+    (pre, rest) <- gets (unsafeSplitHead . premises) --TODO: Use total head
+    modify $ \st ->
+        let env' = (asName, pre) : env st
+         in st { env = env', premises = rest }
 
 -- g = (EVar "P" -># EVar "Q") -># (EVar "Q" -># EVar "R")
 -- pre = [EVar "P" -># (EVar "Q" -># EVar "R")]
