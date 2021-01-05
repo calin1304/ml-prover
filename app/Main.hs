@@ -4,10 +4,10 @@ import System.Environment (getArgs)
 import Text.Printf (printf)
 import Control.Monad.State (runState)
 
-import Parser.Syntax
-import Parser.Lexer
-import Parser.Parser
-import Parser.ParserM (emptyEnv)
+import Language.Syntax
+import Language.Lexer
+import Language.Parser
+import Language.ParserM (emptyEnv)
 
 main :: IO ()
 main =

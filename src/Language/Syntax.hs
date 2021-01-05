@@ -1,8 +1,8 @@
-module Parser.Syntax where
+module Language.Syntax where
 
 import Data.List (intercalate)
 
-import Parser.Lexer
+import Language.Lexer
 
 newtype Source = Source [ModDef]
     deriving (Show)

@@ -1,12 +1,12 @@
 {
-module Parser.Parser (parser) where
+module Language.Parser (parser) where
 
 import Control.Monad.State (modify)
 import Text.Printf (printf)
 
-import Parser.Lexer
-import Parser.Syntax
-import Parser.ParserM
+import Language.Lexer
+import Language.Syntax
+import Language.ParserM
 }
 
 %name parser

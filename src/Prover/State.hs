@@ -1,6 +1,6 @@
 module Prover.State where
 
-import Parser.Syntax
+import Language.Syntax
 import Prover.Types
 
 data ProofState = ProofState

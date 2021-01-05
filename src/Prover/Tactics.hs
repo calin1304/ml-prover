@@ -1,6 +1,6 @@
 module Prover.Tactics where
 
-import Parser.Syntax
+import Language.Syntax
 
 import Prover.ProofM
 import Prover.State

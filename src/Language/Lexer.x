@@ -1,5 +1,5 @@
 {
-module Parser.Lexer (Lexeme (..), LexemeClass (..), scanner) where
+module Language.Lexer (Lexeme (..), LexemeClass (..), scanner) where
 import Data.Char (chr)
 }
 

@@ -1,10 +1,10 @@
-module Parser.ParserM where
+module Language.ParserM where
 
 import Control.Monad.State
 import Text.Printf (printf)
 import Control.Monad (unless)
 
-import Parser.Syntax
+import Language.Syntax
 
 type ParserM a = State Env a
 
