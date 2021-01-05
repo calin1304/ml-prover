@@ -1,5 +1,7 @@
 module Parser.Syntax where
 
+import Data.List (intercalate)
+
 import Parser.Lexer
 
 newtype Source = Source [ModDef]
@@ -27,8 +29,17 @@ data SimpleExpr =
     EVar String
   | SVar String
   | Application String [SimpleExpr]
-  
     deriving (Show)
+
+-- instance Show SimpleExpr where
+--     show (EVar s) = s
+--     show (SVar s) = s
+--     show (Application op xs) =
+--         let sop =
+--                 case op of
+--                     "impl" ->  "(->)"
+--                     _ -> op
+--          in "(" ++ sop ++ " " ++ intercalate " " (map show xs) ++ ")"
 
 data Signature =
     NoSignature

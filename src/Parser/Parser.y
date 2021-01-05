@@ -1,14 +1,18 @@
 {
 module Parser.Parser (parser) where
 
+import Control.Monad.State (modify)
+import Text.Printf (printf)
+
 import Parser.Lexer
 import Parser.Syntax
-import Text.Printf (printf)
+import Parser.ParserM
 }
 
 %name parser
 %tokentype { LexemeClass }
 %error { parserError }
+%monad { ParserM }
 
 -- TODO: Add separate evarId and svarId
 
@@ -60,9 +64,9 @@ Exprs :: { [Expr] }
 
 Expr :: { Expr }
   : metaSym varId '[' Attrs ']' { MetaSym $2 $4 }
-  | notation varId Signature ":=" SimpleExpr '[' Attrs ']' { Notation $2 $3 $5 $7 }
+  | notation varId Signature ":=" SimpleExpr '[' Attrs ']' {% let n = Notation $2 $3 $5 $7 in (pure n <* addNotation n) }
   | imports conId { Import $2 }
-  | rule varId ConIds ":=" from '[' RulePres ']' derive SimpleExpr  { Rule $2 $3 $7 $10}
+  | rule varId ConIds ":=" from '[' RulePres ']' derive SimpleExpr { Rule $2 $3 $7 $10 }
   | lemma varId ConIds ":=" from '[' RulePres ']' derive SimpleExpr Proof { Lemma $2 $3 $7 $10 $11 }
 
 Proof :: { [Tactic] }
@@ -138,6 +142,7 @@ AttrArgs :: { [Int] }
   | AttrArgs integer { reverse ($2 : $1) }
 
 {
-parserError :: [LexemeClass] -> a
-parserError (x:xs) = error $ printf "Error at token: %s (%d from end)" (show x) (length xs)
+parserError :: [LexemeClass] -> ParserM a
+parserError (x:xs) =
+    error $ printf "Error at token: %s (%d from end)" (show x) (length xs)
 }
