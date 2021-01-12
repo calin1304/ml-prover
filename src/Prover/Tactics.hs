@@ -1,12 +1,12 @@
 module Prover.Tactics where
 
-import Language.Syntax
+import           Language.Syntax
 
-import Control.Monad.State
+import           Control.Monad.State
 
-import Prover.ProofM
-import Prover.Types
-import Utils
+import           Prover.ProofM
+import           Prover.Types
+import           Utils
 
 intros :: Name -> ProofM ()
 intros asName = do

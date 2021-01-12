@@ -1,14 +1,14 @@
 module Language.Syntax where
 
-import Test.QuickCheck
-import Data.List (intercalate)
+import           Data.List       (intercalate)
+import           Test.QuickCheck
 
-import Language.Lexer
+import           Language.Lexer
 
 newtype Source = Source [ModDef]
     deriving (Show)
 
-data ModDef = ModDef String [Expr] 
+data ModDef = ModDef String [Expr]
     deriving Show
 
 data Expr =
@@ -19,7 +19,7 @@ data Expr =
   | Lemma String [String] [SimpleExpr] SimpleExpr [Tactic]
     deriving (Show)
 
-data Tactic = 
+data Tactic =
     Intros [String]
   | Specialize SimpleExpr String
   | Apply SimpleExpr (Maybe String)
@@ -37,7 +37,7 @@ instance Arbitrary SimpleExpr where
       where
         genEVar = EVar . pure <$> elements ['a'..'z']
         genSVar = SVar . pure <$> elements ['A'..'Z']
-        genApplication = 
+        genApplication =
             Application
                 <$> arbitrary `suchThat` (\s -> length s > 3 && all (`elem` ['Z'..'Z']) s)
                 <*> arbitrary
@@ -75,17 +75,17 @@ data SymAttr =
 mkAttr :: String -> [Int] -> SymAttr
 mkAttr name args =
     case name of
-        "folded" -> Folded
-        "binder" -> Binder
+        "folded"       -> Folded
+        "binder"       -> Binder
         "substitution" -> Substitution
-        "arity" -> Arity (head args)
-        "set-binder" -> SetBinder
-        "notNegative" -> NotNegative
-        _ -> error $ "Invalid attribute name: " ++ name
+        "arity"        -> Arity (head args)
+        "set-binder"   -> SetBinder
+        "notNegative"  -> NotNegative
+        _              -> error $ "Invalid attribute name: " ++ name
 
 mkVarType :: LexemeClass -> VarType
 mkVarType c =
-    case c of 
+    case c of
         LKeyword "SetVar" -> SetVar
-        LKeyword "Var" -> ElemVar
-        _ -> error "Invalid variable type"
+        LKeyword "Var"    -> ElemVar
+        _                 -> error "Invalid variable type"

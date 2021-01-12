@@ -1,6 +1,6 @@
 module Prover.Types where
 
-import Language.Syntax
+import           Language.Syntax
 
 type Premises = [SimpleExpr]
 type Goal = SimpleExpr

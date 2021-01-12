@@ -1,17 +1,17 @@
 module Prover.ProofM where
 
-import Test.QuickCheck (Arbitrary, arbitrary)
-import GHC.Generics (Generic)
-import Control.Monad.State
+import           Control.Monad.State
+import           GHC.Generics        (Generic)
+import           Test.QuickCheck     (Arbitrary, arbitrary)
 
-import Prover.Types
+import           Prover.Types
 
 type ProofM a = State ProofState a
 
 data ProofState = ProofState
-    { goal :: Goal
+    { goal     :: Goal
     , premises :: Premises
-    , env :: ProofEnv
+    , env      :: ProofEnv
     }
     deriving (Show, Generic)
 
