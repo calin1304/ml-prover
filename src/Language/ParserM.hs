@@ -8,7 +8,7 @@ import           Language.Syntax
 
 type ParserM a = State Env a
 
-data Env = Env
+newtype Env = Env
     { names :: [(String, Expr)]
     }
     deriving (Show)
@@ -21,7 +21,7 @@ emptyEnv = Env
 addNotation :: Expr -> ParserM ()
 addNotation expr =
     case expr of
-        Lemma _ _ _ _ _ -> undefined
+        Lemma {} -> undefined
         Import _ -> undefined
         Notation name _ def _ -> do
             whenM (checkDef def) (error $ printf "%s not defined" name)
