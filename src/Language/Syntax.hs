@@ -1,5 +1,6 @@
 module Language.Syntax where
 
+import Test.QuickCheck
 import Data.List (intercalate)
 
 import Language.Lexer
@@ -29,7 +30,17 @@ data SimpleExpr =
     EVar String
   | SVar String
   | Application String [SimpleExpr]
-    deriving (Show)
+    deriving (Eq, Show)
+
+instance Arbitrary SimpleExpr where
+    arbitrary = oneof [ genEVar, genSVar, genApplication ]
+      where
+        genEVar = EVar . pure <$> elements ['a'..'z']
+        genSVar = SVar . pure <$> elements ['A'..'Z']
+        genApplication = 
+            Application
+                <$> arbitrary `suchThat` (\s -> length s > 3 && all (`elem` ['Z'..'Z']) s)
+                <*> arbitrary
 
 -- instance Show SimpleExpr where
 --     show (EVar s) = s
