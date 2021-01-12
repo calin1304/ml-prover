@@ -10,7 +10,6 @@ import Test.Tasty.QuickCheck
 import Language.Syntax
 import Prover.Types
 import Prover.Tactics
-import Prover.State
 
 tests :: TestTree
 tests = testGroup "Tests"

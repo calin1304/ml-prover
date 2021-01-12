@@ -5,7 +5,6 @@ import Language.Syntax
 import Control.Monad.State
 
 import Prover.ProofM
-import Prover.State
 import Prover.Types
 import Utils
 
