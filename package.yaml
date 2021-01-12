@@ -19,12 +19,13 @@ extra-source-files:
 # common to point users to the README.md file.
 description:         Please see the README on GitHub at <https://github.com/calin1304/ml-parser#readme>
 
+# Make sure to also add extension to .stylish-haskell
 default-extensions:
-- OverloadedStrings
-- LambdaCase
-- DeriveGeneric
-- TypeApplications
 - DataKinds
+- DeriveGeneric
+- LambdaCase
+- OverloadedStrings
+- TypeApplications
 
 dependencies:
 - base >= 4.7 && < 5
