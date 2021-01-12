@@ -1,3 +1,4 @@
 .stack-work/
 *~
 ml-parser.cabal
+report.html
