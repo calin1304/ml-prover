@@ -25,6 +25,10 @@ exact name = (==) <$> goal <*> form
     form :: ProofM SimpleExpr
     form = uses (field @"env") (unsafeLookup name)
 
+apply = undefined
+
+specialize = undefined
+
 -- g = (EVar "P" -># EVar "Q") -># (EVar "Q" -># EVar "R")
 -- pre = [EVar "P" -># (EVar "Q" -># EVar "R")]
 
