@@ -30,9 +30,11 @@ default-extensions:
 dependencies:
 - base >= 4.7 && < 5
 - array
-- mtl
-- lens
+- containers
+- extra
 - generic-lens
+- lens
+- mtl
 - QuickCheck
 
 build-tools:

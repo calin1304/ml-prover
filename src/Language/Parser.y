@@ -56,11 +56,11 @@ ModDefs :: { [ModDef] }
     | ModDefs ModDef { $2 : $1 }
 
 ModDef :: { ModDef }
-  : module conId Exprs endmodule { ModDef $2 $3 }
+  : module conId Exprs endmodule { ModDef $2 (reverse $3) }
 
 Exprs :: { [Expr] } 
   : {- empty -} { [] }
-  | Expr Exprs { $1 : $2 }
+  | Exprs Expr { $2 : $1 }
 
 Expr :: { Expr }
   : metaSym varId '[' Attrs ']' { MetaSym $2 $4 }
@@ -80,9 +80,9 @@ Tactic :: { Tactic }
     : intros ConIds { Intros (reverse $2) }
     | specialize Application as conId { Specialize $2 $4 }
     | apply Application as conId { Apply $2 (Just $4) }
-    | apply Application { Apply $2 Nothing }
     | exact conId { Exact $2 }
 
+-- Premises
 RulePres :: { [SimpleExpr] }
     : {- empty -} { [] }
     | SimpleExpr { [$1] }
