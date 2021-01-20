@@ -37,5 +37,5 @@ runProof tactics premises goal =
 prove :: Tactics -> ProofM Bool
 prove = undefined
 
-addToEnv :: (String, SimpleExpr) -> ProofM ()
+addToEnv :: (String, Expr) -> ProofM ()
 addToEnv (name, expr) = modifying (field @"env") ((name, expr):)

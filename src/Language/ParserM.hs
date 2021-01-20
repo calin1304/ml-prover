@@ -12,7 +12,7 @@ import           Utils
 type ParserM a = State Env a
 
 newtype Env = Env
-    { names :: [(String, Expr)]
+    { names :: [(String, Declaration)]
     }
     deriving (Show)
 
@@ -22,7 +22,7 @@ emptyEnv = Env
     }
 
 -- | Add symbol definition to environment
-addDefinition :: Expr -> ParserM ()
+addDefinition :: Declaration -> ParserM ()
 addDefinition expr =
     case expr of
         Lemma {} -> undefined
@@ -35,14 +35,14 @@ addDefinition expr =
             modify $ \env -> env { names = (name, expr) : names env }
         _ -> undefined
 
-getName :: String -> ParserM (Maybe Expr)
+getName :: String -> ParserM (Maybe Declaration)
 getName name = gets (lookup name . names)
 
 hasName :: String -> ParserM Bool
 hasName = fmap isJust . getName
 
 -- | Check for undefined symbols in expression
-checkDef :: SimpleExpr -> ParserM Bool
+checkDef :: Expr -> ParserM Bool
 checkDef (Application left right) = andM [hasName left, allA checkDef right]
 checkDef (EVar name)              = hasName name
 checkDef (SVar name)              = hasName name

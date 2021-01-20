@@ -8,48 +8,48 @@ import           Language.Lexer
 newtype Source = Source [ModDef]
     deriving (Show)
 
-data ModDef = ModDef String [Expr]
+data ModDef = ModDef String [Declaration]
     deriving Show
 
 -- TODO: Factor out the name ?
-data Expr =
+data Declaration =
     MetaSym
         String    -- Meta symbol name
         [SymAttr] -- Meta symbol attributes
   | Notation
         String     -- Notation name
         Signature  -- Notation arguments
-        SimpleExpr -- Notation expression
+        Expr -- Notation expression
         [SymAttr]  -- Notation attributes
   | Import
         String -- Import name
   | Rule
         String       -- Rule name
         [String]     -- Rule arguments name
-        [SimpleExpr] -- Rule premises
-        SimpleExpr   -- Rule expression
+        [Expr] -- Rule premises
+        Expr   -- Rule expression
   | Lemma
         String       -- Lemma name
         [String]     -- Lemma argument names
-        [SimpleExpr] -- Lemma premises
-        SimpleExpr   -- Lemma expression
+        [Expr] -- Lemma premises
+        Expr   -- Lemma expression
         [Tactic]     -- Proof
     deriving (Show)
 
 data Tactic =
     Intros [String]
-  | Specialize SimpleExpr String
-  | Apply SimpleExpr (Maybe String)
+  | Specialize Expr String
+  | Apply Expr (Maybe String)
   | Exact String
     deriving (Show)
 
-data SimpleExpr =
+data Expr =
     EVar String
   | SVar String
-  | Application String [SimpleExpr]
+  | Application String [Expr]
     deriving (Eq, Show)
 
-instance Arbitrary SimpleExpr where
+instance Arbitrary Expr where
     arbitrary = oneof [ genEVar, genSVar, genApplication ]
       where
         genEVar = EVar . pure <$> elements ['a'..'z']
@@ -59,7 +59,7 @@ instance Arbitrary SimpleExpr where
                 <$> arbitrary `suchThat` (\s -> length s > 3 && all (`elem` ['Z'..'Z']) s)
                 <*> arbitrary
 
--- instance Show SimpleExpr where
+-- instance Show Expr where
 --     show (EVar s) = s
 --     show (SVar s) = s
 --     show (Application op xs) =

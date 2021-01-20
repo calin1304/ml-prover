@@ -58,16 +58,16 @@ ModDefs :: { [ModDef] }
 ModDef :: { ModDef }
   : module conId Exprs endmodule { ModDef $2 (reverse $3) }
 
-Exprs :: { [Expr] } 
+Exprs :: { [Declaration] } 
   : {- empty -} { [] }
-  | Exprs Expr { $2 : $1 }
+  | Exprs Declaration { $2 : $1 }
 
-Expr :: { Expr }
+Declaration :: { Declaration }
   : metaSym varId '[' Attrs ']' { MetaSym $2 $4 }
-  | notation varId Signature ":=" SimpleExpr '[' Attrs ']' {% let n = Notation $2 $3 $5 $7 in (pure n <* addDefinition n) }
+  | notation varId Signature ":=" Expr '[' Attrs ']' { Notation $2 $3 $5 $7 }
   | imports conId { Import $2 }
-  | rule varId ConIds ":=" from '[' RulePres ']' derive SimpleExpr {% let r = Rule $2 $3 $7 $10 in (pure r <* addDefinition r) }
-  | lemma varId ConIds ":=" from '[' RulePres ']' derive SimpleExpr Proof { Lemma $2 $3 $7 $10 $11 }
+  | rule varId ConIds ":=" from '[' RulePres ']' derive Expr { Rule $2 $3 $7 $10 }
+  | lemma varId ConIds ":=" from '[' RulePres ']' derive Expr Proof { Lemma $2 $3 $7 $10 $11 }
 
 Proof :: { [Tactic] }
     : proof Tactics qed { $2 }
@@ -83,10 +83,10 @@ Tactic :: { Tactic }
     | exact conId { Exact $2 }
 
 -- Premises
-RulePres :: { [SimpleExpr] }
+RulePres :: { [Expr] }
     : {- empty -} { [] }
-    | SimpleExpr { [$1] }
-    | RulePres ',' SimpleExpr { $3 : $1 }
+    | Expr { [$1] }
+    | RulePres ',' Expr { $3 : $1 }
 
 ConIds :: { [String] }
     : {- empty -} { [] }
@@ -113,20 +113,20 @@ VarType :: { VarType }
   : setVar  { mkVarType $1 }
   | elemVar { mkVarType $1 }
 
-SimpleExpr :: { SimpleExpr }
+Expr :: { Expr }
   : varId { EVar $1 }
   | conId { SVar $1 }
   | Application { $1 }
-  | '(' SimpleExpr ')' { $2 }
+  | '(' Expr ')' { $2 }
 
-Application :: { SimpleExpr }
+Application :: { Expr }
     : varId ApplicationArgs { Application $1 $2 }
     | conId ApplicationArgs { Application $1 $2 }
     | '(' Application ')' { $2 }
 
-ApplicationArgs :: { [SimpleExpr] }
-  : SimpleExpr { [$1] }
-  | ApplicationArgs SimpleExpr { reverse $ $2 : $1 }
+ApplicationArgs :: { [Expr] }
+  : Expr { [$1] }
+  | ApplicationArgs Expr { reverse $ $2 : $1 }
 
 Attrs :: { [SymAttr] }
   : {- empty -}           { [] }

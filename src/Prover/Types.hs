@@ -2,8 +2,8 @@ module Prover.Types where
 
 import           Language.Syntax
 
-type Premises = [SimpleExpr]
-type Goal = SimpleExpr
-type ProofEnv = [(String, SimpleExpr)]
+type Premises = [Expr]
+type Goal = Expr
+type ProofEnv = [(String, Expr)]
 type Tactics = [Tactic]
 type Name = String

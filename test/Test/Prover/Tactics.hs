@@ -8,7 +8,6 @@ import Test.Tasty.HUnit
 import Test.Tasty.QuickCheck
 
 import Language.Syntax
-import Prover.Types
 import Prover.Tactics
 
 tests :: TestTree

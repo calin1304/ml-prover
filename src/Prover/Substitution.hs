@@ -1,14 +1,17 @@
 module Prover.Substitution where
 
-import Data.Maybe (fromJust)
-import Data.Map.Strict (Map)
+import           Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
+import           Data.Maybe      (fromJust)
 
-import Language.Syntax
+import           Language.Syntax
 
-newtype Subst = Subst (Map String SimpleExpr)
+newtype Subst = Subst (Map String Expr)
 
-applySubst :: Subst -> SimpleExpr -> SimpleExpr
+mkSubst :: [String] -> [Expr] -> Subst
+mkSubst ns es = Subst . M.fromList $ zip ns es
+
+applySubst :: Subst -> Expr -> Expr
 applySubst (Subst s) = \case
     EVar name -> fromJust $ M.lookup name s
     SVar name -> fromJust $ M.lookup name s
