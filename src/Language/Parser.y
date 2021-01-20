@@ -56,18 +56,18 @@ ModDefs :: { [ModDef] }
     | ModDefs ModDef { $2 : $1 }
 
 ModDef :: { ModDef }
-  : module conId Exprs endmodule { ModDef $2 (reverse $3) }
+  : module conId Declarations endmodule { ModDef $2 (reverse $3) }
 
-Exprs :: { [Declaration] } 
+Declarations :: { [Declaration] } 
   : {- empty -} { [] }
-  | Exprs Declaration { $2 : $1 }
+  | Declarations Declaration { $2 : $1 }
 
 Declaration :: { Declaration }
   : metaSym varId '[' Attrs ']' { MetaSym $2 $4 }
   | notation varId Signature ":=" Expr '[' Attrs ']' { Notation $2 $3 $5 $7 }
   | imports conId { Import $2 }
-  | rule varId ConIds ":=" from '[' RulePres ']' derive Expr { Rule $2 $3 $7 $10 }
-  | lemma varId ConIds ":=" from '[' RulePres ']' derive Expr Proof { Lemma $2 $3 $7 $10 $11 }
+  | rule varId ConIds ":=" Expr { Rule $2 $3 $5 }
+  | lemma varId ConIds ":=" Expr Proof { Lemma $2 $3 $5 $6 }
 
 Proof :: { [Tactic] }
     : proof Tactics qed { $2 }
@@ -113,10 +113,18 @@ VarType :: { VarType }
   : setVar  { mkVarType $1 }
   | elemVar { mkVarType $1 }
 
+Exprs :: { [Expr] }
+    : {- empty -} { [] }
+    | Expr Exprs1 { $1 : $2 }
+
+Exprs1 :: { [Expr] }
+    : ',' Exprs { $2 }
+
 Expr :: { Expr }
   : varId { EVar $1 }
   | conId { SVar $1 }
   | Application { $1 }
+  | from '[' Exprs ']' derive Expr { FromDerive $3 $6 }
   | '(' Expr ')' { $2 }
 
 Application :: { Expr }

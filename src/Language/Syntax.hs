@@ -26,13 +26,11 @@ data Declaration =
   | Rule
         String       -- Rule name
         [String]     -- Rule arguments name
-        [Expr] -- Rule premises
-        Expr   -- Rule expression
+        Expr
   | Lemma
         String       -- Lemma name
         [String]     -- Lemma argument names
-        [Expr] -- Lemma premises
-        Expr   -- Lemma expression
+        Expr
         [Tactic]     -- Proof
     deriving (Show)
 
@@ -47,6 +45,7 @@ data Expr =
     EVar String
   | SVar String
   | Application String [Expr]
+  | FromDerive [Expr] Expr
     deriving (Eq, Show)
 
 instance Arbitrary Expr where
