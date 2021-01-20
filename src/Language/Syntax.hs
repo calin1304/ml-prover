@@ -11,12 +11,29 @@ newtype Source = Source [ModDef]
 data ModDef = ModDef String [Expr]
     deriving Show
 
+-- TODO: Factor out the name ?
 data Expr =
-    MetaSym String [SymAttr]
-  | Notation String Signature SimpleExpr [SymAttr]
-  | Import String
-  | Rule String [String] [SimpleExpr] SimpleExpr
-  | Lemma String [String] [SimpleExpr] SimpleExpr [Tactic]
+    MetaSym
+        String    -- Meta symbol name
+        [SymAttr] -- Meta symbol attributes
+  | Notation
+        String     -- Notation name
+        Signature  -- Notation arguments
+        SimpleExpr -- Notation expression
+        [SymAttr]  -- Notation attributes
+  | Import
+        String -- Import name
+  | Rule
+        String       -- Rule name
+        [String]     -- Rule arguments name
+        [SimpleExpr] -- Rule premises
+        SimpleExpr   -- Rule expression
+  | Lemma
+        String       -- Lemma name
+        [String]     -- Lemma argument names
+        [SimpleExpr] -- Lemma premises
+        SimpleExpr   -- Lemma expression
+        [Tactic]     -- Proof
     deriving (Show)
 
 data Tactic =

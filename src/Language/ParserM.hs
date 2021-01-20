@@ -22,8 +22,8 @@ emptyEnv = Env
     }
 
 -- | Add symbol definition to environment
-addNotation :: Expr -> ParserM ()
-addNotation expr =
+addDefinition :: Expr -> ParserM ()
+addDefinition expr =
     case expr of
         Lemma {} -> undefined
         Import _ -> undefined

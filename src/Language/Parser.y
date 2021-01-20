@@ -64,9 +64,9 @@ Exprs :: { [Expr] }
 
 Expr :: { Expr }
   : metaSym varId '[' Attrs ']' { MetaSym $2 $4 }
-  | notation varId Signature ":=" SimpleExpr '[' Attrs ']' {% let n = Notation $2 $3 $5 $7 in (pure n <* addNotation n) }
+  | notation varId Signature ":=" SimpleExpr '[' Attrs ']' {% let n = Notation $2 $3 $5 $7 in (pure n <* addDefinition n) }
   | imports conId { Import $2 }
-  | rule varId ConIds ":=" from '[' RulePres ']' derive SimpleExpr { Rule $2 $3 $7 $10 }
+  | rule varId ConIds ":=" from '[' RulePres ']' derive SimpleExpr {% let r = Rule $2 $3 $7 $10 in (pure r <* addDefinition r) }
   | lemma varId ConIds ":=" from '[' RulePres ']' derive SimpleExpr Proof { Lemma $2 $3 $7 $10 $11 }
 
 Proof :: { [Tactic] }

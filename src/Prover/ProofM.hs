@@ -1,9 +1,12 @@
 module Prover.ProofM where
 
+import           Control.Lens                 (modifying)
 import           Control.Monad.State
-import           GHC.Generics        (Generic)
-import           Test.QuickCheck     (Arbitrary, arbitrary)
+import           Data.Generics.Product.Fields (field)
+import           GHC.Generics                 (Generic)
+import           Test.QuickCheck              (Arbitrary, arbitrary)
 
+import           Language.Syntax
 import           Prover.Types
 
 type ProofM a = State ProofState a
@@ -33,3 +36,6 @@ runProof tactics premises goal =
 
 prove :: Tactics -> ProofM Bool
 prove = undefined
+
+addToEnv :: (String, SimpleExpr) -> ProofM ()
+addToEnv (name, expr) = modifying (field @"env") ((name, expr):)
