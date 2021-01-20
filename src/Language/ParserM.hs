@@ -23,17 +23,17 @@ emptyEnv = Env
 
 -- | Add symbol definition to environment
 addDefinition :: Declaration -> ParserM ()
-addDefinition expr =
-    case expr of
-        Lemma {} -> undefined
-        Import _ -> undefined
-        Notation name _ def _ -> do
-            -- Check if we have references to unknown symbols in definition
-            whenM (checkDef def) (error $ printf "%s not defined" name)
-            modify $ \env -> env { names = (name, expr) : names env }
-        Rule name _ _ _ ->
-            modify $ \env -> env { names = (name, expr) : names env }
-        _ -> undefined
+addDefinition expr = undefined
+    -- case expr of
+    --     Lemma {} -> undefined
+    --     Import _ -> undefined
+    --     Notation name _ def _ -> do
+    --         -- Check if we have references to unknown symbols in definition
+    --         whenM (checkDef def) (error $ printf "%s not defined" name)
+    --         modify $ \env -> env { names = (name, expr) : names env }
+    --     Rule name _ _ _ ->
+    --         modify $ \env -> env { names = (name, expr) : names env }
+    --     _ -> undefined
 
 getName :: String -> ParserM (Maybe Declaration)
 getName name = gets (lookup name . names)

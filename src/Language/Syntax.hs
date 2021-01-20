@@ -11,27 +11,40 @@ newtype Source = Source [ModDef]
 data ModDef = ModDef String [Declaration]
     deriving Show
 
--- TODO: Factor out the name ?
 data Declaration =
     MetaSym
-        String    -- Meta symbol name
-        [SymAttr] -- Meta symbol attributes
+        String   
+        -- ^ Meta symbol name
+        [SymAttr]
+        -- ^ Meta symbol attributes
   | Notation
-        String     -- Notation name
-        Signature  -- Notation arguments
-        Expr -- Notation expression
-        [SymAttr]  -- Notation attributes
+        String
+        -- ^ Notation name
+        Signature
+        -- ^ Notation arguments
+        Expr
+        -- ^ Notation expression
+        [SymAttr]
+        -- ^ Notation attributes
   | Import
-        String -- Import name
+        String
+        -- ^ Import name
   | Rule
-        String       -- Rule name
-        [String]     -- Rule arguments name
+        String
+        -- ^ Rule name
+        [String]
+        -- ^ Argument names
         Expr
+        -- ^ Definition
   | Lemma
-        String       -- Lemma name
-        [String]     -- Lemma argument names
+        String       
+        -- ^ Lemma name
+        [String]
+        -- ^ Argument names
         Expr
-        [Tactic]     -- Proof
+        -- ^ Definition
+        [Tactic]
+        -- ^ Proof
     deriving (Show)
 
 data Tactic =

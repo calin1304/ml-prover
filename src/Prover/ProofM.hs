@@ -11,6 +11,8 @@ import           Prover.Types
 
 type ProofM a = State ProofState a
 
+type ProofEnv = [(String, Declaration)]
+
 data ProofState = ProofState
     { goal     :: Goal
     , premises :: Premises
@@ -18,24 +20,15 @@ data ProofState = ProofState
     }
     deriving (Show, Generic)
 
-instance Arbitrary ProofState where
-    arbitrary =
-        ProofState
-            <$> arbitrary
-            <*> arbitrary
-            <*> arbitrary
+-- instance Arbitrary ProofState where
+--     arbitrary = ProofState <$> arbitrary <*> arbitrary <*> arbitrary
 
-emptyProofEnv :: ProofEnv
-emptyProofEnv = []
+evalModule :: ModDef -> ProofM ()
+evalModule (ModDef _ (decl:decls)) = 
+    case decl of
+        x@(Rule name _ _) -> addToEnv (name, x)
+        x@(Lemma name _ _ _) -> addToEnv (name, x)
+        _ -> undefined
 
-runProof :: Tactics -> Premises -> Goal -> Bool
-runProof tactics premises goal =
-    evalState
-        (prove tactics)
-        (ProofState goal premises emptyProofEnv)
-
-prove :: Tactics -> ProofM Bool
-prove = undefined
-
-addToEnv :: (String, Expr) -> ProofM ()
+addToEnv :: (String, Declaration) -> ProofM ()
 addToEnv (name, expr) = modifying (field @"env") ((name, expr):)

@@ -11,34 +11,35 @@ import           Prover.Types
 import           Utils
 
 intros :: Name -> ProofM ()
-intros asName = do
-    (pre, rest) <- gets (unsafeSplitHead . premises) --TODO: Use total head
-    modify $ \st ->
-        let env' = (asName, pre) : env st
-         in st { env = env', premises = rest }
+intros asName = undefined
+    -- do
+    -- (pre, rest) <- gets (unsafeSplitHead . premises) --TODO: Use total head
+    -- modify $ \st ->
+    --     let env' = (asName, pre) : env st
+    --      in st { env = env', premises = rest }
 
-exact :: Name -> ProofM Bool
-exact name = (==) <$> goal <*> form
-  where
-    goal :: ProofM Expr
-    goal = use (field @"goal")
+-- exact :: Name -> ProofM Bool
+-- exact name = (==) <$> goal <*> form
+--   where
+--     goal :: ProofM Expr
+--     goal = use (field @"goal")
 
-    form :: ProofM Expr
-    form = uses (field @"env") (unsafeLookup name)
+--     form :: ProofM Expr
+--     form = uses (field @"env") (unsafeLookup name)
 
-apply = undefined
+-- apply = undefined
 
-specialize :: Tactic -> ProofM ()
-specialize (Specialize e asName) =
-    case e of
-        Application sym args -> do
-            symDef <- undefined -- get actual symbol definition
-            defArgs <- getSymDefArgs symDef -- get sym arg names
-            let s = mkSubst defArgs args -- make substitution for arguments
-            addToEnv (asName, (applySubst s e))
-          where
-            getSymDefArgs = undefined
-        _ -> undefined
+-- specialize :: Tactic -> ProofM ()
+-- specialize (Specialize e asName) =
+--     case e of
+--         Application sym args -> do
+--             symDef <- undefined -- get actual symbol definition
+--             defArgs <- getSymDefArgs symDef -- get sym arg names
+--             let s = mkSubst defArgs args -- make substitution for arguments
+--             addToEnv (asName, (applySubst s e))
+--           where
+--             getSymDefArgs = undefined
+--         _ -> undefined
 
 -- g = (EVar "P" -># EVar "Q") -># (EVar "Q" -># EVar "R")
 -- pre = [EVar "P" -># (EVar "Q" -># EVar "R")]

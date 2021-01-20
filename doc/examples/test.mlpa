@@ -1,0 +1,8 @@
+module TEST-PL
+    rule a1 P Q := from [] derive (impl (P impl Q P))
+    lemma l1 X Y := from [] derive (impl (X impl X Y))
+    proof
+        specialize (a1 X Y) as H1
+        exact H1
+    qed
+endmodule
