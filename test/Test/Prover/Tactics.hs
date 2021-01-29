@@ -16,7 +16,8 @@ tests :: TestTree
 tests = testGroup "Tests"
     [ -- testProperty "intros adds premise to environment"
         --prop_introsAddPremise
-    testCase "specialize tactic" test_specialize
+      testCase "specialize tactic" test_specialize
+    , testCase "exact tactic" test_exact
     ]
 
 -- prop_introsAddPremise :: Name -> Property
@@ -36,3 +37,11 @@ test_specialize = actual @?= expected
         let ar = Rule "H1" [] (Application "impl" [EVar "X", Application "impl" [EVar "Y", EVar "X"]])
          in ProofState (EVar "") [] [("H1", ar), ("a1", r)]
     actual = execState (specialize sp) pst
+
+test_exact = actual @?= expected
+  where
+    actual = True
+    expected = evalState (exact "a1") pst
+    pst = ProofState (getDefinition r) [] [("a1", a1)]
+    a1 = Rule "a1" ["P", "Q"] (FromDerive [] (Application "impl" [EVar "P", Application "impl" [EVar "Q", EVar "P"]]))
+    r =  Rule "a1" ["X", "Y"] (FromDerive [] (Application "impl" [EVar "X", Application "impl" [EVar "Y", EVar "X"]]))

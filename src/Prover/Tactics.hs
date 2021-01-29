@@ -18,14 +18,14 @@ intros asName = undefined
     --     let env' = (asName, pre) : env st
     --      in st { env = env', premises = rest }
 
--- exact :: Name -> ProofM Bool
--- exact name = (==) <$> goal <*> form
---   where
---     goal :: ProofM Expr
---     goal = use (field @"goal")
+exact :: Name -> ProofM Bool
+exact name = (==) <$> goal <*> form
+  where
+    goal :: ProofM Expr
+    goal = use (field @"goal")
 
---     form :: ProofM Expr
---     form = uses (field @"env") (unsafeLookup name)
+    form :: ProofM Expr
+    form = uses (field @"env") (getDefinition . unsafeLookup name)
 
 -- apply = undefined
 
