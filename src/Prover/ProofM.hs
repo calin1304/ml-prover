@@ -18,7 +18,7 @@ data ProofState = ProofState
     , premises :: Premises
     , env      :: ProofEnv
     }
-    deriving (Show, Generic)
+    deriving (Eq, Show, Generic)
 
 -- instance Arbitrary ProofState where
 --     arbitrary = ProofState <$> arbitrary <*> arbitrary <*> arbitrary

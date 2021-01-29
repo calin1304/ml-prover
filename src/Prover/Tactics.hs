@@ -29,17 +29,23 @@ intros asName = undefined
 
 -- apply = undefined
 
--- specialize :: Tactic -> ProofM ()
--- specialize (Specialize e asName) =
---     case e of
---         Application sym args -> do
---             symDef <- undefined -- get actual symbol definition
---             defArgs <- getSymDefArgs symDef -- get sym arg names
---             let s = mkSubst defArgs args -- make substitution for arguments
---             addToEnv (asName, (applySubst s e))
---           where
---             getSymDefArgs = undefined
---         _ -> undefined
+specialize :: Tactic -> ProofM ()
+specialize (Specialize e asName) =
+    case e of
+        Application symName args -> do
+            sym <- unsafeLookupSymbol symName
+            let symDef = getDefinition sym
+            let symArgs = getArgs sym
+            let s = mkSubst symArgs args
+            addToEnv (asName, Rule asName [] (applySubst s symDef))
+          where
+            getSymDefArgs = undefined
+
+            unsafeLookupSymbol :: String -> ProofM Declaration
+            unsafeLookupSymbol name = do
+                e <- gets env
+                pure $ unsafeLookup name e
+        _ -> undefined
 
 -- g = (EVar "P" -># EVar "Q") -># (EVar "Q" -># EVar "R")
 -- pre = [EVar "P" -># (EVar "Q" -># EVar "R")]

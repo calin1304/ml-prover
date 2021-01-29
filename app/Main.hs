@@ -1,6 +1,6 @@
 module Main where
 
-import System.Environment (getArgs)
+import qualified System.Environment as E (getArgs)
 import Text.Printf (printf)
 import Control.Monad.State (runState)
 import Control.Monad.IO.Class (MonadIO)
@@ -12,7 +12,7 @@ import Language.ParserM (emptyEnv)
 
 main :: IO ()
 main = do
-    args <- getArgs
+    args <- E.getArgs
     parsed <- parseFile $ head args
     pure ()
     -- getArgs >>= readFile . head >>= \s -> do

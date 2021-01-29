@@ -45,14 +45,26 @@ data Declaration =
         -- ^ Definition
         [Tactic]
         -- ^ Proof
-    deriving (Show)
+    deriving (Eq, Show)
+
+class HasArgs a where
+    getArgs :: a -> [String]
+instance HasArgs Declaration where
+    getArgs (Rule _ args _) = args
+    getArgs _ = undefined
+
+class HasDefinition a where
+    getDefinition :: a -> Expr
+instance HasDefinition Declaration where
+    getDefinition (Rule _ _ (FromDerive _ e)) = e
+    getDefinition _ = undefined
 
 data Tactic =
     Intros [String]
   | Specialize Expr String
   | Apply Expr (Maybe String)
   | Exact String
-    deriving (Show)
+    deriving (Eq, Show)
 
 data Expr =
     EVar String
@@ -84,13 +96,13 @@ instance Arbitrary Expr where
 data Signature =
     NoSignature
   | Signature [Argument]
-    deriving (Show)
+    deriving (Eq, Show)
 
 data Argument = Argument String VarType
-    deriving (Show)
+    deriving (Eq, Show)
 
 data VarType = SetVar | ElemVar
-    deriving (Show)
+    deriving (Eq, Show)
 
 data SymAttr =
     Folded
@@ -99,7 +111,7 @@ data SymAttr =
   | SetBinder
   | NotNegative
   | Arity Int
-    deriving (Show)
+    deriving (Eq, Show)
 
 mkAttr :: String -> [Int] -> SymAttr
 mkAttr name args =

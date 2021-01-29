@@ -66,7 +66,7 @@ Declaration :: { Declaration }
   : metaSym varId '[' Attrs ']' { MetaSym $2 $4 }
   | notation varId Signature ":=" Expr '[' Attrs ']' { Notation $2 $3 $5 $7 }
   | imports conId { Import $2 }
-  | rule varId ConIds ":=" Expr { Rule $2 $3 $5 }
+  | rule varId ConIds ":=" Expr {% addDecl_ (Rule $2 (reverse $3) $5) }
   | lemma varId ConIds ":=" Expr Proof { Lemma $2 $3 $5 $6 }
 
 Proof :: { [Tactic] }
@@ -128,13 +128,12 @@ Expr :: { Expr }
   | '(' Expr ')' { $2 }
 
 Application :: { Expr }
-    : varId ApplicationArgs { Application $1 $2 }
-    | conId ApplicationArgs { Application $1 $2 }
-    | '(' Application ')' { $2 }
+    : varId ApplicationArgs { Application $1 (reverse $2) }
+    | conId ApplicationArgs { Application $1 (reverse $2) }
 
 ApplicationArgs :: { [Expr] }
   : Expr { [$1] }
-  | ApplicationArgs Expr { reverse $ $2 : $1 }
+  | ApplicationArgs Expr { $2 : $1 }
 
 Attrs :: { [SymAttr] }
   : {- empty -}           { [] }
