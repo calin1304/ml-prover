@@ -45,5 +45,4 @@ hasName = fmap isJust . getName
 -- | Check for undefined symbols in expression
 checkDef :: Expr -> ParserM Bool
 checkDef (Application left right) = andM [hasName left, allA checkDef right]
-checkDef (EVar name)              = hasName name
-checkDef (SVar name)              = hasName name
+checkDef (Ident name)              = hasName name

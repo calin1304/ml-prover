@@ -18,8 +18,7 @@ import Language.ParserM
 
 %token
     integer   { LInteger $$ }
-    conId     { LConId $$ }
-    varId     { LVarId $$ }
+    ident     { LIdent $$ }
     module    { LKeyword "module" }
     endmodule { LKeyword "endmodule" }
     metaSym   { LKeyword "meta-symbol" }
@@ -56,18 +55,18 @@ ModDefs :: { [ModDef] }
     | ModDefs ModDef { $2 : $1 }
 
 ModDef :: { ModDef }
-  : module conId Declarations endmodule { ModDef $2 (reverse $3) }
+  : module ident Declarations endmodule { ModDef $2 (reverse $3) }
 
 Declarations :: { [Declaration] } 
   : {- empty -} { [] }
   | Declarations Declaration { $2 : $1 }
 
 Declaration :: { Declaration }
-  : metaSym varId '[' Attrs ']' { MetaSym $2 $4 }
-  | notation varId Signature ":=" Expr '[' Attrs ']' { Notation $2 $3 $5 $7 }
-  | imports conId { Import $2 }
-  | rule varId ConIds ":=" Expr {% addDecl_ (Rule $2 (reverse $3) $5) }
-  | lemma varId ConIds ":=" Expr Proof { Lemma $2 $3 $5 $6 }
+  : metaSym ident '[' Attrs ']' { MetaSym $2 $4 }
+  | notation ident Signature ":=" Expr '[' Attrs ']' { Notation $2 $3 $5 $7 }
+  | imports ident { Import $2 }
+  | rule ident ConIds ":=" Expr {% addDecl_ (Rule $2 (reverse $3) $5) }
+  | lemma ident ConIds ":=" Expr Proof { Lemma $2 $3 $5 $6 }
 
 Proof :: { [Tactic] }
     : proof Tactics qed { $2 }
@@ -78,9 +77,9 @@ Tactics :: { [Tactic] }
 
 Tactic :: { Tactic }
     : intros ConIds { Intros (reverse $2) }
-    | specialize Application as conId { Specialize $2 $4 }
-    | apply Application as conId { Apply $2 (Just $4) }
-    | exact conId { Exact $2 }
+    | specialize Application as ident { Specialize $2 $4 }
+    | apply Application as ident { Apply $2 (Just $4) }
+    | exact ident { Exact $2 }
 
 -- Premises
 RulePres :: { [Expr] }
@@ -90,7 +89,7 @@ RulePres :: { [Expr] }
 
 ConIds :: { [String] }
     : {- empty -} { [] }
-    | ConIds conId { $2 : $1 }
+    | ConIds ident { $2 : $1 }
 
 Signature :: { Signature }
   : {- empty -}        { NoSignature }
@@ -98,20 +97,10 @@ Signature :: { Signature }
 
 SignatureList :: { [Argument] }
   : {- empty -} { [] }
-  | SignatureList '(' TypedArg ')' { $3 : $1 }
   | SignatureList UntypedArg { $2 : $1 }
 
-TypedArg :: { Argument }
-  : varId ':' VarType { Argument $1 $3 }
-  | conId ':' VarType { Argument $1 $3 }
-
 UntypedArg :: { Argument }
-  : varId { Argument $1 ElemVar }
-  | conId { Argument $1 SetVar }
-
-VarType :: { VarType }
-  : setVar  { mkVarType $1 }
-  | elemVar { mkVarType $1 }
+  : ident { Argument $1 }
 
 Exprs :: { [Expr] }
     : {- empty -} { [] }
@@ -121,15 +110,13 @@ Exprs1 :: { [Expr] }
     : ',' Exprs { $2 }
 
 Expr :: { Expr }
-  : varId { EVar $1 }
-  | conId { SVar $1 }
+  : ident { Ident $1 }
   | Application { $1 }
   | from '[' Exprs ']' derive Expr { FromDerive $3 $6 }
   | '(' Expr ')' { $2 }
 
 Application :: { Expr }
-    : varId ApplicationArgs { Application $1 (reverse $2) }
-    | conId ApplicationArgs { Application $1 (reverse $2) }
+    : ident ApplicationArgs { Application $1 (reverse $2) }
 
 ApplicationArgs :: { [Expr] }
   : Expr { [$1] }
@@ -137,8 +124,8 @@ ApplicationArgs :: { [Expr] }
 
 Attrs :: { [SymAttr] }
   : {- empty -}           { [] }
-  | varId Attrs1          { mkAttr $1 [] : $2}
-  | varId AttrArgs Attrs1 { mkAttr $1 $2 : $3}
+  | ident Attrs1          { mkAttr $1 [] : $2}
+  | ident AttrArgs Attrs1 { mkAttr $1 $2 : $3}
 
 Attrs1 :: { [SymAttr] }
   : {- empty -} { [] }

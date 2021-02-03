@@ -7,33 +7,20 @@ import Data.Char (chr)
 
 $whitechar = [ \t\n\r\f\v]
 $special   = [\:\(\)\,\;\[\]\`\{\}]
-
 $ascdigit  = 0-9
 $digit     = [$ascdigit]
-
 $ascsymbol = [\!\$\%\&\*\+\.\/\<\=\>\?\@\\\^\|\-\~]
 $symbol    = [$ascsymbol] # [$special \_\:\"\']
-
 $large     = [A-Z]
 $small     = [a-z]
 $alpha     = [$small $large]
-
 $graphic   = [$small $large $symbol $digit $special \:\"\']
-
 $idchar    = [$alpha $digit \'\-\_]
-$symchar   = [$symbol \:]
-$nl        = [\n\r]
 
 @tacticsIds = intros|specialize|apply|exact
 @keyword = @tacticsIds|module|endmodule|imports|meta\-symbol|notation|rule|from|derive|lemma|proof|qed|as|SetVar|Var
-
 @reservedop = ":="
-
-@varid  = [$small \#\_] $idchar*
-@conid  = [$large \_] $idchar*
-@varsym = $symbol $symchar*
-@consym = \: $symchar*
-
+@ident  = [$large $small \_] $idchar*
 @decimal     = $digit+
 
 $cntrl   = [$large \@\[\\\]\^\_]
@@ -52,10 +39,8 @@ haskell :-
 <0> "--"\-*[^$symbol].*		                  { skip }
 <0> $special			                      { mkCharL LSpecial }
 <0> @keyword			                      { mkStringL LKeyword }
-<0> @varid			                          { mkStringL LVarId }
-<0> @conid			                          { mkStringL LConId }
+<0> @ident			                          { mkStringL LIdent }
 <0> @reservedop			                      { mkStringL LReservedOp }
-<0> @varsym			                          { mkL LVarSym }
 <0> @decimal                                  { readL LInteger }
 <0> \' ($graphic # [\'\\] | " " | @escape) \' { mkCharL LChar }
 <0> \" @string* \"		                      { mkStringL LString }
@@ -66,24 +51,12 @@ data Lexeme = L AlexPosn LexemeClass String
 
 data LexemeClass =
     LInteger Int
-  | LFloat
   | LChar Char
   | LString String
   | LSpecial Char
   | LKeyword String
   | LReservedOp String
-  | LVarId String
-  | LQVarId
-  | LConId String
-  | LQConId
-  | LVarSym
-  | LQVarSym
-  | LConSym
-  | LQConSym
-  | LLBracket
-  | LRBracket
-  | LLParan
-  | LRParan
+  | LIdent String
   | LEOF 
   deriving (Show, Eq)
   

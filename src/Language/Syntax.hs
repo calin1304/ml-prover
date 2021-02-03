@@ -67,41 +67,17 @@ data Tactic =
     deriving (Eq, Show)
 
 data Expr =
-    EVar String
-  | SVar String
+    Ident String
   | Application String [Expr]
   | FromDerive [Expr] Expr
     deriving (Eq, Show)
-
-instance Arbitrary Expr where
-    arbitrary = oneof [ genEVar, genSVar, genApplication ]
-      where
-        genEVar = EVar . pure <$> elements ['a'..'z']
-        genSVar = SVar . pure <$> elements ['A'..'Z']
-        genApplication =
-            Application
-                <$> arbitrary `suchThat` (\s -> length s > 3 && all (`elem` ['Z'..'Z']) s)
-                <*> arbitrary
-
--- instance Show Expr where
---     show (EVar s) = s
---     show (SVar s) = s
---     show (Application op xs) =
---         let sop =
---                 case op of
---                     "impl" ->  "(->)"
---                     _ -> op
---          in "(" ++ sop ++ " " ++ intercalate " " (map show xs) ++ ")"
 
 data Signature =
     NoSignature
   | Signature [Argument]
     deriving (Eq, Show)
 
-data Argument = Argument String VarType
-    deriving (Eq, Show)
-
-data VarType = SetVar | ElemVar
+data Argument = Argument String
     deriving (Eq, Show)
 
 data SymAttr =
@@ -123,10 +99,3 @@ mkAttr name args =
         "set-binder"   -> SetBinder
         "notNegative"  -> NotNegative
         _              -> error $ "Invalid attribute name: " ++ name
-
-mkVarType :: LexemeClass -> VarType
-mkVarType c =
-    case c of
-        LKeyword "SetVar" -> SetVar
-        LKeyword "Var"    -> ElemVar
-        _                 -> error "Invalid variable type"
