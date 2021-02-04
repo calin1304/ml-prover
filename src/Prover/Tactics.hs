@@ -19,41 +19,10 @@ intros asName = undefined
     --      in st { env = env', premises = rest }
 
 exact :: Name -> ProofM Bool
-exact name = (==) <$> goal <*> form
-  where
-    goal :: ProofM Expr
-    goal = use (field @"goal")
+exact name = undefined -- (==) <$> goal <*> form
+--   where
+--     goal :: ProofM Expr
+--     goal = use (field @"goal")
 
-    form :: ProofM Expr
-    form = uses (field @"env") (getDefinition . unsafeLookup name)
-
--- apply = undefined
-
-specialize :: Tactic -> ProofM ()
-specialize (Specialize e asName) =
-    case e of
-        Application symName args -> do
-            sym <- unsafeLookupSymbol symName
-            let symDef = getDefinition sym
-            let symArgs = getArgs sym
-            let s = mkSubst symArgs args
-            addToEnv (asName, Rule asName [] (applySubst s symDef))
-          where
-            getSymDefArgs = undefined
-
-            unsafeLookupSymbol :: String -> ProofM Declaration
-            unsafeLookupSymbol name = do
-                e <- gets env
-                pure $ unsafeLookup name e
-        _ -> undefined
-
--- g = (EVar "P" -># EVar "Q") -># (EVar "Q" -># EVar "R")
--- pre = [EVar "P" -># (EVar "Q" -># EVar "R")]
-
--- test = runState (intros "H") (ProofState g pre emptyProofEnv)
-
--- (#) :: String -> [Expr] -> Expr
--- x # xs = Application x xs
-
--- (->#) :: Expr -> Expr -> Expr
--- x -># y = Application "impl" [x, y]
+--     form :: ProofM Expr
+--     form = uses (field @"env") (getDefinition . unsafeLookup name)

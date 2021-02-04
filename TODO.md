@@ -1,10 +1,11 @@
-- Add custom prelude or use one from packages
-Tactics:
+- [ ] matching
+- [ ] apply tactic
 - [ ] intros
-- [ ] simpl
-- [ ] reflexivity
-- [ ] destruct
 - [ ] exact
-    - check that goal is equal to argument formula
-- [ ] apply
-- [ ] specialize
+
+Backlog:
+    - Add custom prelude or use one from packages
+    - Tactics
+        - [ ] simpl
+        - [ ] reflexivity
+        - [ ] destruct

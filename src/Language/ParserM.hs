@@ -23,7 +23,7 @@ emptyEnv = Env
 
 -- | Add symbol definition to environment
 addDeclaration :: Declaration -> ParserM ()
-addDeclaration decl = 
+addDeclaration decl =
     case decl of
         -- Notation name _ def _ -> do
         --     -- Check if we have references to unknown symbols in definition
@@ -45,4 +45,4 @@ hasName = fmap isJust . getName
 -- | Check for undefined symbols in expression
 checkDef :: Expr -> ParserM Bool
 checkDef (Application left right) = andM [hasName left, allA checkDef right]
-checkDef (Ident name)              = hasName name
+checkDef (Ident name)             = hasName name

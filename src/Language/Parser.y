@@ -65,31 +65,25 @@ Declaration :: { Declaration }
   : metaSym ident '[' Attrs ']' { MetaSym $2 $4 }
   | notation ident Signature ":=" Expr '[' Attrs ']' { Notation $2 $3 $5 $7 }
   | imports ident { Import $2 }
-  | rule ident ConIds ":=" Expr {% addDecl_ (Rule $2 (reverse $3) $5) }
-  | lemma ident ConIds ":=" Expr Proof { Lemma $2 $3 $5 $6 }
+  | rule ident Idents ":=" Expr {% addDecl_ (Rule $2 (reverse $3) $5) }
+  | lemma ident Idents ":=" Expr Proof { Lemma $2 $3 $5 $6 }
 
 Proof :: { [Tactic] }
-    : proof Tactics qed { $2 }
+    : proof Tactics qed { reverse $2 }
 
 Tactics :: { [Tactic] }
     : Tactic { [$1] }
     | Tactics Tactic { $2 : $1 }
 
 Tactic :: { Tactic }
-    : intros ConIds { Intros (reverse $2) }
-    | specialize Application as ident { Specialize $2 $4 }
-    | apply Application as ident { Apply $2 (Just $4) }
+    : intros Idents { Intros (reverse $2) }
+    | specialize Expr as ident { Specialize $2 $4 }
+    | apply Expr as ident { Apply $2 (Just $4) }
     | exact ident { Exact $2 }
 
--- Premises
-RulePres :: { [Expr] }
+Idents :: { [String] }
     : {- empty -} { [] }
-    | Expr { [$1] }
-    | RulePres ',' Expr { $3 : $1 }
-
-ConIds :: { [String] }
-    : {- empty -} { [] }
-    | ConIds ident { $2 : $1 }
+    | Idents ident { $2 : $1 }
 
 Signature :: { Signature }
   : {- empty -}        { NoSignature }
@@ -104,10 +98,7 @@ UntypedArg :: { Argument }
 
 Exprs :: { [Expr] }
     : {- empty -} { [] }
-    | Expr Exprs1 { $1 : $2 }
-
-Exprs1 :: { [Expr] }
-    : ',' Exprs { $2 }
+    | Exprs Expr { $2 : $1 }
 
 Expr :: { Expr }
   : ident { Ident $1 }

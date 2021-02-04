@@ -13,7 +13,7 @@ data ModDef = ModDef String [Declaration]
 
 data Declaration =
     MetaSym
-        String   
+        String
         -- ^ Meta symbol name
         [SymAttr]
         -- ^ Meta symbol attributes
@@ -37,7 +37,7 @@ data Declaration =
         Expr
         -- ^ Definition
   | Lemma
-        String       
+        String
         -- ^ Lemma name
         [String]
         -- ^ Argument names
@@ -51,13 +51,13 @@ class HasArgs a where
     getArgs :: a -> [String]
 instance HasArgs Declaration where
     getArgs (Rule _ args _) = args
-    getArgs _ = undefined
+    getArgs _               = undefined
 
 class HasDefinition a where
     getDefinition :: a -> Expr
 instance HasDefinition Declaration where
     getDefinition (Rule _ _ (FromDerive _ e)) = e
-    getDefinition _ = undefined
+    getDefinition _                           = undefined
 
 data Tactic =
     Intros [String]
