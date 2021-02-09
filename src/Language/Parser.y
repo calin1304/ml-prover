@@ -76,7 +76,7 @@ Tactics :: { [Tactic] }
     | Tactics Tactic { $2 : $1 }
 
 Tactic :: { Tactic }
-    : intros Idents { Intros (reverse $2) }
+    : intros ident { Intros $2 }
     | specialize Expr as ident { Specialize $2 $4 }
     | apply Expr as ident { Apply $2 (Just $4) }
     | exact ident { Exact $2 }
@@ -97,12 +97,13 @@ UntypedArg :: { Argument }
   : ident { Argument $1 }
 
 Exprs :: { [Expr] }
-    : {- empty -} { [] }
-    | Exprs Expr { $2 : $1 }
+    : Expr { [$1] }
+    | Exprs ',' Expr { $3 : $1 }
 
 Expr :: { Expr }
   : ident { Ident $1 }
   | Application { $1 }
+  | from '[' ']' derive Expr { FromDerive [] $5 }
   | from '[' Exprs ']' derive Expr { FromDerive $3 $6 }
   | '(' Expr ')' { $2 }
 

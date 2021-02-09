@@ -3,7 +3,9 @@ module Prover.ProofM where
 import           Control.Arrow                ((&&&))
 import           Control.Lens                 (modifying)
 import           Control.Monad.State
+import           Data.Function                ((&))
 import           Data.Generics.Product.Fields (field)
+import           Data.List                    (uncons)
 import           Data.Maybe                   (fromMaybe)
 import           GHC.Generics                 (Generic)
 import           Test.QuickCheck              (Arbitrary, arbitrary)
@@ -30,7 +32,23 @@ runProofM = runState
 
 step :: Tactic -> ProofM ()
 step = \case
+    Intros asName -> intros asName
     Specialize expr asName -> specialize expr asName
+    Apply expr asName -> apply expr asName
+    Exact name -> exact name
+
+-------------
+-- Tactics --
+-------------
+
+intros :: Name -> ProofM ()
+intros asName =
+    modify $ \st ->
+        let (pre, rest) =
+                uncons (premises st)
+                    & fromMaybe (error "Trying to intros with no premises")
+            env' = (asName, Rule asName [] pre) : env st
+         in st { env = env', premises = rest }
 
 specialize :: Expr -> String -> ProofM ()
 specialize expr asName =
@@ -40,6 +58,16 @@ specialize expr asName =
             let s = mkSubst sargs args
             addToEnv (applySubst s sdef) asName
         _ -> error "Specializing something which is not an application"
+
+apply :: Expr -> String -> ProofM ()
+apply = undefined
+
+exact :: String -> ProofM ()
+exact = undefined
+
+-------------
+-- Helpers --
+-------------
 
 addToEnv :: Expr -> String -> ProofM ()
 addToEnv expr asName =

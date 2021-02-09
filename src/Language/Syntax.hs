@@ -60,7 +60,7 @@ instance HasDefinition Declaration where
     getDefinition _                           = undefined
 
 data Tactic =
-    Intros [String]
+    Intros String
   | Specialize Expr String
   | Apply Expr (Maybe String)
   | Exact String

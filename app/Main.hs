@@ -24,7 +24,6 @@ main = do
                 ((ModDef name decls):xs) -> do
                     let (a, st) = runInterpM (traverse interp decls) []
                     showSection "Interp state" st
-    pure ()
     -- getArgs >>= readFile . head >>= \s -> do
     --     let lexemes = scanner s
     --         parsed = fmap ((`runState` emptyEnv) . parser) lexemes
