@@ -23,8 +23,6 @@ import Language.ParserM
     endmodule { LKeyword "endmodule" }
     metaSym   { LKeyword "meta-symbol" }
     notation  { LKeyword "notation" }
-    setVar    { LKeyword "SetVar" }
-    elemVar   { LKeyword "Var" }
     imports   { LKeyword "imports" }
     rule      { LKeyword "rule" }
     from      { LKeyword "from" }
@@ -42,7 +40,6 @@ import Language.ParserM
     '('       { LSpecial '(' }
     ')'       { LSpecial ')' }
     ','       { LSpecial ',' }
-    ':'       { LSpecial ':' }
     ":="      { LReservedOp ":=" }
 
 %%
@@ -86,8 +83,7 @@ Idents :: { [String] }
     | Idents ident { $2 : $1 }
 
 Signature :: { Signature }
-  : {- empty -}        { NoSignature }
-  | SignatureList      { Signature $1 }
+  : SignatureList { Signature $1 }
 
 SignatureList :: { [Argument] }
   : {- empty -} { [] }
