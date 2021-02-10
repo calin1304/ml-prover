@@ -9,6 +9,7 @@ import           Language.Syntax
 newtype Subst = Subst (Map String Expr)
                 deriving (Show)
 
+-- TODO: Should I change to (Foldable f => f (String, Expr)) ?
 mkSubst :: [String] -> [Expr] -> Subst
 mkSubst ns es = Subst . M.fromList $ zip ns es
 

@@ -34,13 +34,14 @@ step :: Tactic -> ProofM ()
 step = \case
     Intros asName -> intros asName
     Specialize expr asName -> specialize expr asName
-    Apply expr asName -> apply expr asName
-    Exact name -> exact name
+    -- Apply expr asName -> apply expr asName
+    -- Exact name -> exact name
 
 -------------
 -- Tactics --
 -------------
 
+-- FIXME: Doesn't work with implication
 intros :: Name -> ProofM ()
 intros asName =
     modify $ \st ->
@@ -64,6 +65,8 @@ apply = undefined
 
 exact :: String -> ProofM ()
 exact = undefined
+
+
 
 -------------
 -- Helpers --
