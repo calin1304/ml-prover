@@ -25,6 +25,7 @@ default-extensions:
 - DeriveGeneric
 - LambdaCase
 - OverloadedStrings
+- StrictData
 - TypeApplications
 
 dependencies:
@@ -36,6 +37,7 @@ dependencies:
 - lens
 - mtl
 - QuickCheck
+- text
 
 build-tools:
 - alex
