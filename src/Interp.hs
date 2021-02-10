@@ -20,8 +20,10 @@ interp decl =
         Rule name _ _ -> modify ((name, decl):)
         Lemma name args (FromDerive premises goal) tactics -> do
             env <- get
-            let (result, proofState') =
+            let
+                introArgs = map (\x -> (x, Rule x [] (Ident x))) args
+                (result, proofState') =
                     runProofM
                         (traverse step tactics)
-                        (ProofState goal premises env)
+                        (ProofState goal premises (introArgs ++ env))
             seq (debugSection "Proof state" proofState') (pure ())
