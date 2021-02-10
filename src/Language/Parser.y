@@ -130,5 +130,5 @@ AttrArgs :: { [Int] }
 {
 parserError :: [LexemeClass] -> ParserM a
 parserError (x:xs) =
-    error $ printf "Error at token: %s (%d from end)" (show x) (length xs)
+    error $ printf "Error at token: %s (%d from end)\nRest: %s" (show x) (length xs) (show xs)
 }
