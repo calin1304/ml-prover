@@ -8,7 +8,7 @@ import           Text.Printf            (printf)
 import           Interp                 (interp, runInterpM)
 import           Language.Lexer
 import           Language.Parser
-import           Language.ParserM       (emptyEnv)
+import           Language.ParserM       (ParserState(..))
 import           Language.Syntax
 import           Utils                  (showSection)
 
@@ -35,7 +35,7 @@ parseFile :: FilePath -> IO (Either String Source)
 parseFile path = do
     contents <- readFile path
     let elexemes = scanner contents
-        parsed = (\ls -> runState (parser ls) emptyEnv) <$> elexemes
+        parsed = (\ls -> runState (parser ls) (ParserState [])) <$> elexemes
     showSection "Lexer output" elexemes
     showSection "Parser output" (fst <$> parsed)
     showSection "Parser final state" (snd <$> parsed)

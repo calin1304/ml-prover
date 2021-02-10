@@ -9,17 +9,12 @@ import           Text.Printf         (printf)
 import           Language.Syntax
 import           Utils
 
-type ParserM a = State Env a
+type ParserM a = State ParserState a
 
-newtype Env = Env
+data ParserState = ParserState
     { names :: [(String, Declaration)]
     }
     deriving (Show)
-
-emptyEnv :: Env
-emptyEnv = Env
-    { names = []
-    }
 
 -- | Add symbol definition to environment
 addDeclaration :: Declaration -> ParserM ()
