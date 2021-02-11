@@ -1,6 +1,5 @@
 {
 module Language.Lexer (Lexeme (..), LexemeClass (..), scanner) where
-import Data.Char (chr)
 }
 
 %wrapper "monad"
