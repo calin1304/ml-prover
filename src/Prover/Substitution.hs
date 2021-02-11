@@ -14,7 +14,7 @@ mkSubst :: [String] -> [Expr] -> Subst
 mkSubst ns es = Subst . M.fromList $ zip ns es
 
 applySubst :: Subst -> Expr -> Expr
-applySubst (Subst s) = \case
-    Ident name -> fromMaybe (Ident name) $ M.lookup name s
-    Application sym args -> Application sym (map (applySubst (Subst s)) args)
-    FromDerive ps es -> FromDerive ps (applySubst (Subst s) es)
+applySubst (Subst s) = undefined -- \case
+    -- Ident name -> fromMaybe (Ident name) $ M.lookup name s
+    -- Application sym args -> Application sym (map (applySubst (Subst s)) args)
+    -- FromDerive ps es -> FromDerive ps (applySubst (Subst s) es)

@@ -40,6 +40,9 @@ import Language.ParserM
     ','       { LSpecial ',' }
     ":="      { LReservedOp ":=" }
 
+%nonassoc ident '(' from
+%nonassoc APP
+
 %%
 
 Source :: { Source }
@@ -60,8 +63,8 @@ Declaration :: { Declaration }
   : metaSym ident '[' Attrs ']' { MetaSym $2 $4 }
   | notation ident Signature ":=" Expr '[' Attrs ']' { Notation $2 $3 $5 $7 }
   | imports ident { Import $2 }
-  | rule ident Idents ":=" Expr {% addDecl_ (Rule $2 (reverse $3) $5) }
-  | lemma ident Idents ":=" Expr Proof { Lemma $2 $3 $5 $6 }
+  | rule ident Idents ":=" FromDerive {% addDecl_ (Rule $2 (reverse $3) $5) }
+  | lemma ident Idents ":=" FromDerive Proof { Lemma $2 $3 $5 $6 }
 
 Proof :: { [Tactic] }
     : proof Tactics qed { reverse $2 }
@@ -90,23 +93,18 @@ SignatureList :: { [Argument] }
 UntypedArg :: { Argument }
   : ident { Argument $1 }
 
-Exprs :: { [Expr] }
+Exprs1 :: { [Expr] }
     : Expr { [$1] }
-    | Exprs ',' Expr { $3 : $1 }
+    | Exprs1 ',' Expr { $3 : $1 }
 
 Expr :: { Expr }
-  : ident { Ident $1 }
-  | Application { $1 }
-  | from '[' ']' derive Expr { FromDerive [] $5 }
-  | from '[' Exprs ']' derive Expr { FromDerive $3 $6 }
-  | '(' Expr ')' { $2 }
+  : ident               { Ident $1 }
+  | Expr Expr %prec APP { Application $1 $2 }
+  | '(' Expr ')'        { $2 }
 
-Application :: { Expr }
-    : ident ApplicationArgs { Application $1 (reverse $2) }
-
-ApplicationArgs :: { [Expr] }
-  : Expr { [$1] }
-  | ApplicationArgs Expr { $2 : $1 }
+FromDerive :: { Expr }
+    : from '[' ']' derive Expr { FromDerive [] $5 }
+    | from '[' Exprs1 ']' derive Expr { FromDerive $3 $6 }
 
 Attrs :: { [SymAttr] }
     : {- empty -}           { [] }
@@ -115,7 +113,7 @@ Attrs :: { [SymAttr] }
 Attrs1 :: { [SymAttr] }
     : ident             { [mkAttr $1 []] }
     | ident Decimals1   { [mkAttr $1 []] }
-    | Attrs1 ',' ident  { mkAttr $3 [] : $2 }
+    | Attrs1 ',' ident  { mkAttr $3 [] : $1 }
 
 Decimals1 :: { [Int] }
     : integer { [$1] }

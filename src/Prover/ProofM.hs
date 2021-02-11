@@ -52,13 +52,13 @@ intros asName =
          in st { env = env', premises = rest }
 
 specialize :: Expr -> String -> ProofM ()
-specialize expr asName =
-    case expr of
-        Application sym args -> do
-            (sdef, sargs) <- (getDefinition &&& getArgs) <$> lookupSymbol sym
-            let s = mkSubst sargs args
-            addToEnv (applySubst s sdef) asName
-        _ -> error "Specializing something which is not an application"
+specialize expr asName = undefined
+    -- case expr of
+    --     Application sym args -> do
+    --         (sdef, sargs) <- (getDefinition &&& getArgs) <$> lookupSymbol sym
+    --         let s = mkSubst sargs args
+    --         addToEnv (applySubst s sdef) asName
+    --     _ -> error "Specializing something which is not an application"
 
 apply :: Expr -> String -> ProofM ()
 apply = undefined

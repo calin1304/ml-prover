@@ -68,7 +68,7 @@ data Tactic =
 
 data Expr =
     Ident String
-  | Application String [Expr]
+  | Application Expr Expr
   | FromDerive [Expr] Expr
     deriving (Eq, Show)
 
