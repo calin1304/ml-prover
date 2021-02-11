@@ -14,8 +14,6 @@ import Language.ParserM
 %error { parserError }
 %monad { ParserM }
 
--- TODO: Add separate evarId and svarId
-
 %token
     integer   { LInteger $$ }
     ident     { LIdent $$ }
@@ -111,17 +109,17 @@ ApplicationArgs :: { [Expr] }
   | ApplicationArgs Expr { $2 : $1 }
 
 Attrs :: { [SymAttr] }
-  : {- empty -}           { [] }
-  | ident Attrs1          { mkAttr $1 [] : $2}
-  | ident AttrArgs Attrs1 { mkAttr $1 $2 : $3}
+    : {- empty -}           { [] }
+    | Attrs1 { $1 }
 
 Attrs1 :: { [SymAttr] }
-  : {- empty -} { [] }
-  | ',' Attrs   { $2 }
+    : ident             { [mkAttr $1 []] }
+    | ident Decimals1   { [mkAttr $1 []] }
+    | Attrs1 ',' ident  { mkAttr $3 [] : $2 }
 
-AttrArgs :: { [Int] }
-  : {- empty -}       { [] }
-  | AttrArgs integer { reverse ($2 : $1) }
+Decimals1 :: { [Int] }
+    : integer { [$1] }
+    | Decimals1 integer { $2 : $1 }
 
 {
 parserError :: [LexemeClass] -> ParserM a
