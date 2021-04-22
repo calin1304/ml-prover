@@ -10,11 +10,11 @@ newtype Subst = Subst (Map String Expr)
                 deriving (Show)
 
 -- TODO: Should I change to (Foldable f => f (String, Expr)) ?
-mkSubst :: [String] -> [Expr] -> Subst
-mkSubst ns es = Subst . M.fromList $ zip ns es
+mkSubst :: [(String, Expr)] -> Subst
+mkSubst = Subst . M.fromList
 
 applySubst :: Subst -> Expr -> Expr
-applySubst (Subst s) = undefined -- \case
-    -- Ident name -> fromMaybe (Ident name) $ M.lookup name s
-    -- Application sym args -> Application sym (map (applySubst (Subst s)) args)
-    -- FromDerive ps es -> FromDerive ps (applySubst (Subst s) es)
+applySubst subst@(Subst s) = \case
+    Ident name -> fromMaybe (Ident name) $ M.lookup name s
+    Application e1 e2 -> Application (applySubst subst e1) (applySubst subst e2)
+    FromDerive ps es -> FromDerive (map (applySubst subst) ps) (applySubst subst es)

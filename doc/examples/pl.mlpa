@@ -31,4 +31,13 @@ module ML-PROPOSITIONAL-LOGIC
     apply (modus_ponens _ _ H1 H2') as H3
     exact H3
   qed
+
+    mp2 :: Var -> Var -> Var -> Expr
+    lemma mp2 X Y Z := from [X, Y, X -> (Y -> Z)] derive Z
+        proof
+           intros X Y H1
+           specialize (mp X H1) as H2 -- Y -> Z
+           specialize (mp Y H2) as H3 -- Z
+           exact H3
+        qed
 endmodule

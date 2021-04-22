@@ -10,14 +10,21 @@ import Control.Monad.State (execState)
 import Prover.ProofM (ProofState (..))
 
 import Language.Syntax
-import Prover.Tactics
+import Prover.ProofM
 
 tests :: TestTree
-tests = testGroup "Tests"
+tests = testGroup "Tactics"
     [ -- testProperty "intros adds premise to environment"
         --prop_introsAddPremise
-      testCase "specialize tactic" test_specialize
-    , testCase "exact tactic" test_exact
+      testCase
+        "specialize adds a new rule instantiated from an existing rule"
+        test_specialize
+    , testCase
+        "specialize works with modus ponens"
+        test_specialize_mp
+    , testCase
+        "exact tactic works as expected"
+        test_exact
     ]
 
 -- prop_introsAddPremise :: Name -> Property
@@ -30,18 +37,25 @@ tests = testGroup "Tests"
 
 test_specialize = actual @?= expected
   where
-    sp = Specialize (Application "a1" [EVar "X", EVar "Y"]) "H1"
-    pst = ProofState (EVar "") [] [("a1", r)]
-    r = Rule "a1" ["P", "Q"] (FromDerive [] (Application "impl" [EVar "P", Application "impl" [EVar "Q", EVar "P"]]))
-    expected =
-        let ar = Rule "H1" [] (Application "impl" [EVar "X", Application "impl" [EVar "Y", EVar "X"]])
-         in ProofState (EVar "") [] [("H1", ar), ("a1", r)]
-    actual = execState (specialize sp) pst
+    expected = Rule "r" [] $ FromDerive [] (Ident "X")
+    actual = evalState (specialize' sp) pst
+
+    sp = Ident "r" ## Ident "X"
+    r = Rule "r" ["P"] $ FromDerive [] (Ident "P")
+    pst = ProofState (Ident "") [] [("r", r)]
+
+test_specialize_mp = actual @?= expected
+  where
+    expected = Rule "mp" [] $ FromDerive [Ident "X", Ident "X" ## Ident "Y"] (Ident "Y")
+    actual = evalState (specialize' sp) pst
+
+    sp = Ident "mp" ## Ident "X" ## Ident "Y"
+    pst = ProofState (Ident "") [] [("mp", mp)]
+    mp = Rule "mp" ["P", "Q"] $ FromDerive [Ident "P", Ident "P" ## Ident "Q"] (Ident "Q")
 
 test_exact = actual @?= expected
   where
-    actual = True
-    expected = evalState (exact "a1") pst
-    pst = ProofState (getDefinition r) [] [("a1", a1)]
-    a1 = Rule "a1" ["P", "Q"] (FromDerive [] (Application "impl" [EVar "P", Application "impl" [EVar "Q", EVar "P"]]))
-    r =  Rule "a1" ["X", "Y"] (FromDerive [] (Application "impl" [EVar "X", Application "impl" [EVar "Y", EVar "X"]]))
+    expected = True
+    actual = evalState (exact "a") pst
+    pst = ProofState (Ident "P") [] [("a", a)]
+    a = Rule "a" ["P"] (FromDerive [] (Ident "P"))

@@ -1,8 +1,23 @@
 module TEST-PL
-    rule a1 P Q := from [] derive (impl (P impl Q P))
-    lemma l1 X Y := from [] derive (impl (X impl X Y))
-    proof
-        specialize (a1 X Y) as H1
-        exact H1
-    qed
+    rule a1 P Q :=
+        from []
+        derive (impl (P (impl Q P)))
+    rule a2 P Q R :=
+        from []
+        derive (impl (impl P (impl Q R)) (impl (impl P Q) (impl P R)))
+    rule a3 P Q :=
+        from []
+        derive (impl (impl (not P) (impl Q)) (impl Q P))
+    rule mp P Q :=
+        from [P, (impl P Q)]
+        derive Q
+    lemma mp2 X Y Z := from [X, Y, impl X (impl Y Z)] derive Z
+        proof
+           intros X
+           intros Y
+           intros H1                    -- H1: |- X -> (Y -> Z)
+           specialize (mp X) as H2      -- H2: |- forall Y : X -> (X -> Y) -> Y
+           specialize (mp Y) as H3      -- H3: |- forall Z : Y -> (Y -> Z) -> Z
+           exact H3                     -- |- X -> (Y -> Z)
+        qed
 endmodule

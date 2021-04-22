@@ -4,6 +4,8 @@ import           Control.Monad.IO.Class (MonadIO)
 import           Control.Monad.State    (runState)
 import qualified System.Environment     as E (getArgs)
 import           Text.Printf            (printf)
+import qualified Data.Map as M (empty)
+import GHC.IO.Encoding (setLocaleEncoding, utf8)
 
 import           Interp                 (interp, runInterpM)
 import           Language.Lexer
@@ -14,6 +16,7 @@ import           Utils                  (showSection)
 
 main :: IO ()
 main = do
+    setLocaleEncoding utf8
     args <- E.getArgs
     parsed <- parseFile $ head args
     case parsed of
@@ -22,7 +25,7 @@ main = do
             case mods of
                 [] -> error "No modules parsed"
                 ((ModDef name decls):xs) -> do
-                    let (a, st) = runInterpM (traverse interp decls) []
+                    let (a, st) = runInterpM (traverse interp decls) M.empty
                     showSection "Interp state" st
     -- getArgs >>= readFile . head >>= \s -> do
     --     let lexemes = scanner s

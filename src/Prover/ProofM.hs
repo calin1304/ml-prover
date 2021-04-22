@@ -1,15 +1,18 @@
 module Prover.ProofM where
 
+import Data.List (intercalate)
 import           Control.Arrow                ((&&&))
-import           Control.Lens                 (modifying)
+import           Control.Lens
 import           Control.Monad.State
 import           Data.Function                ((&))
+import Data.Functor ((<&>))
 import           Data.Generics.Product.Fields (field)
-import           Data.List                    (uncons)
 import           Data.Maybe                   (fromMaybe)
 import           GHC.Generics                 (Generic)
 import           Test.QuickCheck              (Arbitrary, arbitrary)
 import           Text.Printf                  (printf)
+import Data.Map (Map (..))
+import qualified Data.Map as M (insert, lookup, toList)
 
 import           Language.Syntax
 import           Prover.Substitution
@@ -18,14 +21,35 @@ import           Utils
 
 type ProofM a = State ProofState a
 
-type ProofEnv = [(String, Declaration)]
+type ProofEnv = Map String Declaration
 
 data ProofState = ProofState
     { goal     :: Goal
     , premises :: Premises
     , env      :: ProofEnv
     }
-    deriving (Eq, Show, Generic)
+    deriving (Eq, Generic)
+
+------------
+-- Lenses --
+------------
+
+_goal :: Lens' ProofState Goal
+_goal = field @"goal"
+
+_premises :: Lens' ProofState Premises
+_premises = field @"premises"
+
+_env :: Lens' ProofState ProofEnv
+_env = field @"env"
+
+---
+
+instance Show ProofState where
+    show (ProofState goal premises env) =
+        printf "Env:\n%s\n------\nGoal:\n\t > %s" (showEnv) (show goal)
+      where
+        showEnv = intercalate "\n" . map (("\t > "++) . show) $ M.toList env
 
 runProofM :: ProofM a -> ProofState -> (a, ProofState)
 runProofM = runState
@@ -35,7 +59,7 @@ step = \case
     Intros asName -> intros asName
     Specialize expr asName -> specialize expr asName
     -- Apply expr asName -> apply expr asName
-    -- Exact name -> exact name
+    Exact name -> exact name
 
 -------------
 -- Tactics --
@@ -44,39 +68,75 @@ step = \case
 -- FIXME: Doesn't work with implication
 intros :: Name -> ProofM ()
 intros asName =
-    modify $ \st ->
-        let (pre, rest) =
-                uncons (premises st)
-                    & fromMaybe (error "Trying to intros with no premises")
-            env' = (asName, Rule asName [] pre) : env st
-         in st { env = env', premises = rest }
+    modify $ \st -> do
+        let (pre, rest) = uncons (premises st) & fromMaybe (error "Trying to intros with no premises")
+        st
+            & _env %~ M.insert asName (Rule asName [] pre)
+            & _premises .~ rest 
 
-specialize :: Expr -> String -> ProofM ()
-specialize expr asName = undefined
+{-
+    Instantiate arguments of a rule.
+    
+    TODO: First argument is an expression but, ideally, it should just be
+        an application of arguments to a name.
+-}
+specialize :: Expr -> Name -> ProofM ()
+specialize expr asName = specialize' expr >>= (\r -> addRule r asName)
     -- case expr of
-    --     Application sym args -> do
-    --         (sdef, sargs) <- (getDefinition &&& getArgs) <$> lookupSymbol sym
-    --         let s = mkSubst sargs args
-    --         addToEnv (applySubst s sdef) asName
-    --     _ -> error "Specializing something which is not an application"
+    --     Application e1 e2 -> undefined
+            -- (sdef, sargs) <- (getDefinition &&& getArgs) <$> lookupSymbol sym
+            -- let s = mkSubst sargs args
+            -- addToEnv (applySubst s sdef) asName
+        -- _ -> error "Invalid specialize argument"
+
+specialize' :: Expr -> ProofM Declaration
+specialize' expr =
+    case expr of
+        Application e1 e2 -> do
+            -- Get rule from inner expression
+            r <- specialize' e1
+            case r of
+                Rule name args def ->
+                    case args of
+                        [] -> error "Not enough arguments to specialize"
+                        (x:xs) -> do
+                            let subst = mkSubst [(x, e2)]
+                            pure $ Rule name xs (applySubst subst def)
+                _ -> error "Symbol not a rule"
+        Ident name -> lookupSymbol name
+        _ -> error "Invalid specialize argument"
 
 apply :: Expr -> String -> ProofM ()
 apply = undefined
 
-exact :: String -> ProofM ()
-exact = undefined
+-- Tactic lookups the goal in assumptions
+assumption :: ProofM ()
+assumption = undefined
 
+exact :: Name -> ProofM ()
+exact name =
+    exact' name >>= \case
+        True -> _goal .=  (Ident "top")
+        False -> do
+            get
+                >>= error 
+                        . printf "exact: Could not match formula with goal\nProof state:\n%s"
+                        . show
 
+exact' :: Name -> ProofM Bool
+exact' name = (==) <$> gets goal <*> (getDefinition <$> lookupSymbol name)
 
 -------------
 -- Helpers --
 -------------
 
-addToEnv :: Expr -> String -> ProofM ()
-addToEnv expr asName =
-    modifying (field @"env") ((asName, Rule asName [] expr):)
+addRule :: Declaration -> Name -> ProofM ()
+addRule rule asName = _env %= M.insert asName rule
 
-lookupSymbol :: String -> ProofM Declaration
-lookupSymbol name =
-    fromMaybe (error $ printf "Symbol %s not found\n." name)
-        <$> gets (lookup name . env)
+addToEnv :: Expr -> String -> ProofM ()
+addToEnv expr asName = addRule (Rule asName [] expr) asName
+
+lookupSymbol :: Name -> ProofM Declaration
+lookupSymbol name = 
+    use (_env . at name)
+        <&> fromMaybe (error $ printf "Symbol %s not found\n." name)

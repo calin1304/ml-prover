@@ -64,7 +64,7 @@ Declaration :: { Declaration }
   | notation ident Signature ":=" Expr '[' Attrs ']' { Notation $2 $3 $5 $7 }
   | imports ident { Import $2 }
   | rule ident Idents ":=" FromDerive {% addDecl_ (Rule $2 (reverse $3) $5) }
-  | lemma ident Idents ":=" FromDerive Proof { Lemma $2 $3 $5 $6 }
+  | lemma ident Idents ":=" FromDerive Proof { Lemma $2 (reverse $3) $5 $6 }
 
 Proof :: { [Tactic] }
     : proof Tactics qed { reverse $2 }
@@ -104,7 +104,7 @@ Expr :: { Expr }
 
 FromDerive :: { Expr }
     : from '[' ']' derive Expr { FromDerive [] $5 }
-    | from '[' Exprs1 ']' derive Expr { FromDerive $3 $6 }
+    | from '[' Exprs1 ']' derive Expr { FromDerive (reverse $3) $6 }
 
 Attrs :: { [SymAttr] }
     : {- empty -}           { [] }
