@@ -33,16 +33,15 @@ $charesc = [abfnrtv\\\"\'\&]
 @string  = $graphic # [\"\\] | " " | @escape | @gap
 
 haskell :-
-
-<0> $white+			                          { skip }
-<0> "--"\-*[^$symbol].*		                  { skip }
-<0> $special			                      { mkCharL LSpecial }
-<0> @keyword			                      { mkStringL LKeyword }
-<0> @ident			                          { mkStringL LIdent }
-<0> @reservedop			                      { mkStringL LReservedOp }
-<0> @decimal                                  { readL LInteger }
-<0> \' ($graphic # [\'\\] | " " | @escape) \' { mkCharL LChar }
-<0> \" @string* \"		                      { mkStringL LString }
+    $white+			                          { skip }
+    "--"\-*[^$symbol].*		                  { skip }
+    $special			                      { mkCharL LSpecial }
+    @keyword			                      { mkStringL LKeyword }
+    @ident			                          { mkStringL LIdent }
+    @reservedop			                      { mkStringL LReservedOp }
+    @decimal                                  { readL LInteger }
+    \' ($graphic # [\'\\] | " " | @escape) \' { mkCharL LChar }
+    \" @string* \"		                      { mkStringL LString }
 
 {
 data Lexeme = L AlexPosn LexemeClass String 
