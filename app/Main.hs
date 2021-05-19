@@ -3,9 +3,7 @@ module Main where
 import           Control.Monad.IO.Class (MonadIO)
 import           Control.Monad.State    (runState)
 import qualified System.Environment     as E (getArgs)
-import           Text.Printf            (printf)
 import qualified Data.Map as M (empty)
-import GHC.IO.Encoding (setLocaleEncoding, utf8)
 
 import           Interp                 (interp, runInterpM)
 import           Language.Lexer
@@ -16,7 +14,6 @@ import           Utils                  (showSection)
 
 main :: IO ()
 main = do
-    setLocaleEncoding utf8
     args <- E.getArgs
     parsed <- parseFile $ head args
     case parsed of
