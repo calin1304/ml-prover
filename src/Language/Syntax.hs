@@ -4,15 +4,25 @@ import           Data.List       (intercalate)
 import           Test.QuickCheck
 import Text.Printf (printf)
 import qualified Text.PrettyPrint as PP
-import Text.PrettyPrint ((<+>))
+import Text.PrettyPrint ((<+>), ($+$))
 
 import           Language.Lexer
+import Print
 
 newtype Source = Source [ModDef]
     deriving (Show)
 
 data ModDef = ModDef String [Declaration]
-    deriving Show
+
+instance Show ModDef where
+    show = PP.render . docModDef
+
+docModDef :: ModDef -> PP.Doc
+docModDef (ModDef name decls) =
+    docName <+> PP.lbrace $+$ PP.nest 4 docDecls $+$ PP.rbrace
+  where
+    docName = PP.doubleQuotes (PP.text name)
+    docDecls = PP.vcat $ map docDeclaration decls
 
 data Declaration =
     MetaSym
@@ -123,28 +133,32 @@ docDeclaration = \case
             then docDef name def
             else PP.hsep [PP.text name, definition, forall, PP.text (intercalate " " args), PP.char ':', docExpr def]
     Lemma name args def proof ->
-        PP.hsep [PP.text name, definition, forall, PP.hsep $ map PP.text args, colon, docExpr def]
+        let docProof = PP.vcat $ map docTactic proof
+         in  PP.hsep
+                [ PP.text ("L_" <> name)
+                , definition
+                , forall
+                , PP.hsep $ map PP.text args
+                , PP.colon
+                , docExpr def
+                ]
+                $+$ PP.nest 4 (docProof $+$ qed)
+
 
 docDef :: String -> Expr -> PP.Doc
-docDef name expr = PP.text name <> PP.text "≔" <> docExpr expr
+docDef name expr = PP.text name <+> definition <+> docExpr expr
 
 docExpr :: Expr -> PP.Doc
 docExpr = \case
-    Ident s -> PP.text s
-    Application e1 e2 -> PP.parens (docExpr e1) <> PP.space <> docExpr e2
+    Ident s -> if s == "top" then top else PP.text s
+    Application e1 e2 -> docExpr e1 <+> docExpr e2
     FromDerive pres e ->
         let docPres = if null pres then PP.empty else PP.text (show pres) -- TODO: doc pres
-         in PP.hsep [docPres, vdash, docExpr e]
+         in docPres <+> vdash <+> docExpr e
 
-vdash :: PP.Doc
-vdash = PP.char '⊢'
-
-lambda = PP.char 'λ'
--- let char_arrow ()  = if !Config.ascii then "->" else "→"
--- let char_darrow () = if !Config.ascii then "=>" else "⇒"
--- let char_prod ()   = if !Config.ascii then "forall" else "Π"
-forall = PP.char '∀'
--- let char_equal ()  = if !Config.ascii then "==" else "≡"
-
-definition = PP.char '≔'
-colon = PP.char ':'
+docTactic :: Tactic -> PP.Doc
+docTactic = \case
+    Intros asName -> PP.text "intros" <+> PP.text asName
+    Specialize e asName -> PP.text "specialize" <+> docExpr e <+> PP.text asName
+    Apply e maybeAsName -> PP.text "apply" <+> docExpr e <+> PP.text (show maybeAsName)
+    Exact name -> PP.text "exact" <+> PP.text name

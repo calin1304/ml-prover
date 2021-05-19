@@ -4,7 +4,8 @@ import           Control.Monad       (unless)
 import           Control.Monad.Extra (andM, whenM)
 import           Control.Monad.State
 import           Data.Maybe          (isJust)
-import           Text.Printf         (printf)
+import Data.List (intercalate)
+import qualified Text.PrettyPrint as PP
 
 import           Language.Syntax
 import           Utils
@@ -14,7 +15,9 @@ type ParserM a = State ParserState a
 data ParserState = ParserState
     { names :: [(String, Declaration)]
     }
-    deriving (Show)
+
+instance Show ParserState where
+    show = PP.render . docParserState
 
 -- | Add symbol definition to environment
 addDeclaration :: Declaration -> ParserM ()
@@ -41,3 +44,12 @@ hasName = fmap isJust . getName
 checkDef :: Expr -> ParserM Bool
 checkDef (Application left right) = pure False -- andM [hasName left, allA checkDef right]
 checkDef (Ident name)             = hasName name
+
+---------------------
+-- Pretty printing --
+---------------------
+
+docParserState :: ParserState -> PP.Doc
+docParserState (ParserState names) = PP.braces $ PP.nest 4 docNames
+  where
+    docNames = PP.vcat $ map (PP.text . show . snd) names

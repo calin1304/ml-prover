@@ -13,6 +13,8 @@ import           Test.QuickCheck              (Arbitrary, arbitrary)
 import           Text.Printf                  (printf)
 import Data.Map (Map (..))
 import qualified Data.Map as M (insert, lookup, toList)
+import qualified Text.PrettyPrint as PP
+import Text.PrettyPrint (($+$))
 
 import           Language.Syntax
 import           Prover.Substitution
@@ -46,10 +48,7 @@ _env = field @"env"
 ---
 
 instance Show ProofState where
-    show (ProofState goal premises env) =
-        printf "Env:\n%s\n------\nGoal:\n\t > %s" (showEnv) (show goal)
-      where
-        showEnv = intercalate "\n" . map (("\t > "++) . show) $ M.toList env
+    show = PP.render . docProofState
 
 runProofM :: ProofM a -> ProofState -> (a, ProofState)
 runProofM = runState
@@ -140,3 +139,13 @@ lookupSymbol :: Name -> ProofM Declaration
 lookupSymbol name = 
     use (_env . at name)
         <&> fromMaybe (error $ printf "Symbol %s not found\n." name)
+
+---------------------
+-- Pretty printing --
+---------------------
+
+docProofState (ProofState goal premises env) =
+    PP.text "Env" $+$ PP.nest 4 docEnv $+$ PP.text "Goal" $+$ PP.nest 4 docGoal
+  where
+    docEnv = PP.vcat . map (PP.text . show . snd) $ M.toList env
+    docGoal = docExpr goal
