@@ -36,6 +36,7 @@ dependencies:
 - generic-lens
 - lens
 - mtl
+- pretty
 - QuickCheck
 - text
 
