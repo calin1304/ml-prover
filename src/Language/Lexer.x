@@ -32,7 +32,7 @@ $charesc = [abfnrtv\\\"\'\&]
 @gap     = \\ $whitechar+ \\
 @string  = $graphic # [\"\\] | " " | @escape | @gap
 
-haskell :-
+mlp :-
     $white+			                          { skip }
     "--"\-*[^$symbol].*		                  { skip }
     $special			                      { mkCharL LSpecial }

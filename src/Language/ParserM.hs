@@ -8,6 +8,7 @@ import Data.List (intercalate)
 import qualified Text.PrettyPrint as PP
 
 import           Language.Syntax
+import           Language.Lexer
 import           Utils
 
 type ParserM a = State ParserState a
@@ -18,6 +19,11 @@ data ParserState = ParserState
 
 instance Show ParserState where
     show = PP.render . docParserState
+
+runParserM :: ([LexemeClass] -> ParserM a)-> [LexemeClass] -> a
+runParserM p ls = fst $ runState (p ls) emptyState
+  where
+    emptyState = ParserState []
 
 -- | Add symbol definition to environment
 addDeclaration :: Declaration -> ParserM ()

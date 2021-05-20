@@ -1,5 +1,10 @@
 {
-module Language.Parser (parser) where
+module Language.Parser
+    ( parser
+    , parseModule
+    , parseDeclaration
+    , parseExpression
+    ) where
 
 import Control.Monad.State (modify)
 import Text.Printf (printf)
@@ -12,6 +17,10 @@ import Language.ParserM
 %expect 0
 
 %name parser
+%name parseModule ModDef
+%name parseDeclaration Declaration
+%name parseExpression Expr
+
 %tokentype { LexemeClass }
 %error { parserError }
 %monad { ParserM }
@@ -50,12 +59,20 @@ import Language.ParserM
 Source :: { Source }
     : ModDefs { Source (reverse $1) }
 
+------------------------
+-- Module definitions --
+------------------------
+
 ModDefs :: { [ModDef] }
     : {- empty -} { [] }
     | ModDefs ModDef { $2 : $1 }
 
 ModDef :: { ModDef }
   : module ident Declarations endmodule { ModDef $2 (reverse $3) }
+
+----------------------------
+-- Top-Level Declarations --
+----------------------------
 
 Declarations :: { [Declaration] } 
   : {- empty -} { [] }
