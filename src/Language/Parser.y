@@ -9,6 +9,8 @@ import Language.Syntax
 import Language.ParserM
 }
 
+%expect 0
+
 %name parser
 %tokentype { LexemeClass }
 %error { parserError }
