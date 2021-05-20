@@ -151,10 +151,16 @@ docDef name expr = PP.text name <+> definition <+> docExpr expr
 docExpr :: Expr -> PP.Doc
 docExpr = \case
     Ident s -> if s == "top" then top else PP.text s
-    Application e1 e2 -> docExpr e1 <+> docExpr e2
+    Application e1 e2 ->
+        let e2' = (if isApplication e2 then PP.parens else id) (docExpr e2)
+         in docExpr e1 <+> e2'
     FromDerive pres e ->
         let docPres = if null pres then PP.empty else PP.text (show pres) -- TODO: doc pres
          in docPres <+> vdash <+> docExpr e
+  where
+    isApplication :: Expr -> Bool
+    isApplication (Application _ _) = True
+    isApplication _ = False
 
 docTactic :: Tactic -> PP.Doc
 docTactic = \case
