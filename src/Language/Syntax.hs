@@ -87,6 +87,9 @@ appPrec = 10
 instance Show Expr where
     show = PP.render . docExpr
 
+instance IsString Expr where
+    fromString s = Ident s
+
 -- I'm tired of writing long names
 infixl 5 ##
 (##) = Application
