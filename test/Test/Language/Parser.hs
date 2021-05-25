@@ -11,12 +11,16 @@ import Language.ParserM
 
 tests :: TestTree
 tests = testGroup "Parser"
-    [ testCase
-        "can parse application"
-        test_parse_application
+    [ testCase "idParser" idParserTest
+    , testCase "applicationParser" applicationParserTest
     ]
 
-test_parse_application = actual @?= expected
+idParserTest = actual @?= expected
+  where
+    expected = Right $ Ident "X"
+    actual = runParserM parseExpression <$> scanner "X"
+
+applicationParserTest = actual @?= expected
   where
     expected =
         Right
