@@ -5,6 +5,7 @@ import Test.Tasty
 import qualified Test.Language.Parser as Parser (tests)
 import qualified Test.Prover.Tactics as Tactics (tests)
 import qualified Test.Prover.Substitution as Substitution (tests)
+import qualified Test.Prover as Prover (tests)
 
 main =
     defaultMain
@@ -12,4 +13,5 @@ main =
             [ Parser.tests
             , Tactics.tests
             , Substitution.tests
+            , Prover.tests
             ]
