@@ -80,7 +80,7 @@ intros asName =
         an application of arguments to a name.
 -}
 specialize :: Expr -> Name -> ProofM ()
-specialize expr asName = specialize' expr >>= (\r -> addRule r asName)
+specialize expr asName = specialize' expr >>= (`addRule` asName)
     -- case expr of
     --     Application e1 e2 -> undefined
             -- (sdef, sargs) <- (getDefinition &&& getArgs) <$> lookupSymbol sym
@@ -130,7 +130,7 @@ exact' name = (==) <$> gets goal <*> (getDefinition <$> lookupSymbol name)
 -------------
 
 addRule :: Declaration -> Name -> ProofM ()
-addRule rule asName = _env %= M.insert asName rule
+addRule (Rule name args e) asName = _env %= M.insert asName (Rule asName args e)
 
 addToEnv :: Expr -> String -> ProofM ()
 addToEnv expr asName = addRule (Rule asName [] expr) asName

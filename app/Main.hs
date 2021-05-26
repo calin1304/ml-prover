@@ -4,8 +4,9 @@ import           Control.Monad.IO.Class (MonadIO)
 import           Control.Monad.State    (runState)
 import qualified System.Environment     as E (getArgs)
 import qualified Data.Map as M (empty)
+import Data.Foldable (traverse_)
 
-import           Interp                 (interp, runInterpM)
+import           Interp                 (interp, runInterpM, Env, InterpError)
 import           Language.Lexer
 import           Language.Parser
 import           Language.ParserM       (ParserState(..))
@@ -14,22 +15,24 @@ import           Utils                  (showSection)
 
 main :: IO ()
 main = do
-    args <- E.getArgs
-    parsed <- parseFile $ head args
+    parsed <- parseFile . head =<< E.getArgs 
     case parsed of
         Left e -> error e
         Right (Source mods) ->
             case mods of
                 [] -> error "No modules parsed"
-                ((ModDef name decls):xs) -> do
-                    let (a, st) = runInterpM (traverse interp decls) M.empty
-                    showSection "Interp state" st
+                mods -> showSection "result" $ map checkModule mods
+                    -- let (a, st) = runInterpM (traverse interp decls) M.empty
+                    -- showSection "Interp state" st
     -- getArgs >>= readFile . head >>= \s -> do
     --     let lexemes = scanner s
     --         parsed = fmap ((`runState` emptyEnv) . parser) lexemes
     --     showSection "Lexer output" lexemes
     --     showSection "Parser output" (fst <$> parsed)
     --     showSection "Parser final state" (snd <$> parsed)
+
+checkModule :: ModDef -> (Either InterpError [()], Env)
+checkModule (ModDef name decls) = runInterpM (traverse interp decls) M.empty
 
 parseFile :: FilePath -> IO (Either String Source)
 parseFile path = do
