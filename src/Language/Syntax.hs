@@ -5,6 +5,7 @@ import           Test.QuickCheck
 import Text.Printf (printf)
 import qualified Text.PrettyPrint as PP
 import Text.PrettyPrint ((<+>), ($+$))
+import Data.String (IsString, fromString)
 
 import           Language.Lexer
 import Print
@@ -81,8 +82,6 @@ data Expr =
   | Application Expr Expr
   | FromDerive [Expr] Expr
     deriving (Eq)
-
-appPrec = 10
 
 instance Show Expr where
     show = PP.render . docExpr
