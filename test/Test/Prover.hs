@@ -14,10 +14,13 @@ import Language.Lexer
 import Language.Parser
 import Language.ParserM
 import Prover.ProofM
+import Interp (isTop)
 
 tests :: TestTree
 tests = testGroup "Prover"
-    [ specializeTacticTest
+    [ specializeTacticTests
+    , exactTacticTests
+    , proofTests
     ]
 
 test_prop_logic = undefined -- actual @?= expected
@@ -43,7 +46,7 @@ specialize (mp H1 H2) as H3
 env: H1 : X, H2 : X -> Y : H3 : Y
 -}
 
-specializeTacticTest :: TestTree
+specializeTacticTests :: TestTree
 specializeTacticTest = 
     testGroup "specialize tactic"
         [ testCase "partial specialization" partialSpecialization
@@ -113,3 +116,21 @@ specializeTacticTest =
         name @?= "Hss"
         args @?= []
         exp @?= FromDerive ["impl" ## ("impl" ## "X" ## "Y") ## ("impl" ## "X" ## "Y")] ("impl" ## "X" ## "Y")
+
+exactTacticTests :: TestTree
+exactTacticTest =
+    testGroup "exact tactic"
+        [ testCase "works as expected" exactTest
+        ]
+  where
+    exactTest = do
+        let (a, st) =
+                runProofM
+                    (exact "H")
+                    (ProofState
+                        { goal = "Y"
+                        , premises = []
+                        , env = M.fromList [ ("H", Rule "H" [] "Y") ]
+                        }
+                    )
+        assertBool "goal is satisfied" $ isTop $ st ^. _goal
