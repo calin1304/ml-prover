@@ -103,7 +103,7 @@ specializeTacticTest =
                         , premises = []
                         , env =
                             M.fromList
-                                [ ("r", Rule "r" ["P"] (FromDerive ["impl" ## "P" ## "impl"] "P"))
+                                [ ("r", Rule "r" ["P"] (FromDerive ["impl" ## "P" ## "P"] "P"))
                                 , ("H", Rule "H" [] ("impl" ## "X" ## "Y"))
                                 ]
                         }

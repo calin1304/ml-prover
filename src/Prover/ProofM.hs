@@ -88,12 +88,13 @@ specialize expr asName = specialize' expr >>= (`addRule` asName)
             -- addToEnv (applySubst s sdef) asName
         -- _ -> error "Invalid specialize argument"
 
+-- TODO: Make it work with nested applications, for example "mp P Q"
 specialize' :: Expr -> ProofM Declaration
 specialize' expr =
     case expr of
-        Application e1 e2 -> do
-            -- Get rule from inner expression
-            r <- specialize' e1
+        Application (Ident i) (Ident j) -> do
+            r <- lookupSymbol i
+            e2 <- getDefinition <$> lookupSymbol j
             case r of
                 Rule name args def ->
                     case args of
@@ -102,7 +103,6 @@ specialize' expr =
                             let subst = mkSubst [(x, e2)]
                             pure $ Rule name xs (applySubst subst def)
                 _ -> error "Symbol not a rule"
-        Ident name -> lookupSymbol name
         _ -> error "Invalid specialize argument"
 
 apply :: Expr -> String -> ProofM ()
