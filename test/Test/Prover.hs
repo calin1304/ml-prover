@@ -47,7 +47,7 @@ env: H1 : X, H2 : X -> Y : H3 : Y
 -}
 
 specializeTacticTests :: TestTree
-specializeTacticTest = 
+specializeTacticTests = 
     testGroup "specialize tactic"
         [ testCase "partial specialization" partialSpecialization
         , testCase "total specialization" totalSpecialization
@@ -118,7 +118,7 @@ specializeTacticTest =
         exp @?= FromDerive ["impl" ## ("impl" ## "X" ## "Y") ## ("impl" ## "X" ## "Y")] ("impl" ## "X" ## "Y")
 
 exactTacticTests :: TestTree
-exactTacticTest =
+exactTacticTests =
     testGroup "exact tactic"
         [ testCase "works as expected" exactTest
         ]
@@ -131,6 +131,34 @@ exactTacticTest =
                         { goal = "Y"
                         , premises = []
                         , env = M.fromList [ ("H", Rule "H" [] "Y") ]
+                        }
+                    )
+        assertBool "goal is satisfied" $ isTop $ st ^. _goal
+
+proofTests :: TestTree
+proofTests = 
+    testGroup "proofs"
+        [ testCase "simple proof" proofTest
+        ]
+  where
+    proofTest = do
+        let proof = do
+                specialize ("mp" ## "X") "Hs"
+                specialize ("Hs" ## "Y") "Hss"
+                apply "Hss"
+        let (a, st) =
+                runProofM
+                    proof
+                    (ProofState
+                        { goal = "Y"
+                        , premises = []
+                        , env =
+                            M.fromList
+                                [ ("mp", Rule "mp" ["P", "Q"] (FromDerive ["P", "impl" ## "P" ## "Q"] "Q"))
+                                , ("X", Rule "X" [] "X")
+                                , ("Y", Rule "Y" [] "Y")
+                                , ("H", Rule "H" [] ("impl" ## "X" ## "Y"))
+                                ]
                         }
                     )
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
