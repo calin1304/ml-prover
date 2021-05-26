@@ -47,6 +47,8 @@ specializeTacticTest :: TestTree
 specializeTacticTest = 
     testGroup "specialize tactic"
         [ testCase "partial specialization" partialSpecialization
+        , testCase "total specialization" totalSpecialization
+        , testCase "application expression" applicatioSpecialization
         ]
   where
     -- TODO: Test that it fails if rule to specialize is not in the context
@@ -59,14 +61,55 @@ specializeTacticTest =
                         , premises = []
                         , env =
                             M.fromList
-                                [ ("mp", Rule "mp" ["X", "Y"] (FromDerive ["X", "impl" ## "X" ## "Y"] "Y"))
+                                [ ("mp", Rule "mp" ["P", "Q"] (FromDerive ["P", "impl" ## "P" ## "Q"] "Q"))
                                 , ("X", Rule "X" [] "X")
-                                , ("H", Rule "H" ["X", "Y"] ("impl" ## "X" ## "Y"))
                                 ]
                         }
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hs"
         let Just (Rule name args exp) = st ^. _env . at "Hs"
         name @?= "Hs"
-        args @?= ["Y"]
+        args @?= ["Q"]
+        exp @?= FromDerive ["X", "impl" ## "X" ## "Q"] "Q"
+
+    totalSpecialization = do
+        let (a, st) =
+                runProofM
+                    (specialize ("Hs" ## "Y") "Hss")
+                    (ProofState
+                        { goal = "Y"
+                        , premises = []
+                        , env =
+                            M.fromList
+                                [ ("mp", Rule "mp" ["P", "Q"] (FromDerive ["P", "impl" ## "P" ## "Q"] "Q"))
+                                , ("X", Rule "X" [] "X")
+                                , ("Y", Rule "Y" [] "Y")
+                                , ("Hs", Rule "Hs" ["Q"] (FromDerive ["X", "impl" ## "X" ## "Q"] "Q"))
+                                ]
+                        }
+                    )
+        assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hss"
+        let Just (Rule name args exp) = st ^. _env . at "Hss"
+        name @?= "Hss"
+        args @?= []
         exp @?= FromDerive ["X", "impl" ## "X" ## "Y"] "Y"
+
+    applicatioSpecialization = do
+        let (a, st) =
+                runProofM
+                    (specialize ("r" ## "H") "Hss")
+                    (ProofState
+                        { goal = "Y"
+                        , premises = []
+                        , env =
+                            M.fromList
+                                [ ("r", Rule "r" ["P"] (FromDerive ["impl" ## "P" ## "impl"] "P"))
+                                , ("H", Rule "H" [] ("impl" ## "X" ## "Y"))
+                                ]
+                        }
+                    )
+        assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hss"
+        let Just (Rule name args exp) = st ^. _env . at "Hss"
+        name @?= "Hss"
+        args @?= []
+        exp @?= FromDerive ["impl" ## ("impl" ## "X" ## "Y") ## ("impl" ## "X" ## "Y")] ("impl" ## "X" ## "Y")
