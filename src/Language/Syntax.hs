@@ -124,16 +124,16 @@ docDeclaration = \case
     Rule name args hs c ->
         let name' = PP.text name
             args' = PP.text $ unwords args
-            hypotheses = undefined
-            conclusion = undefined
+            hypotheses = docExprs hs
+            conclusion = docExpr c
          in if null args
-                then undefined -- docDef name hypotheses conclusion
-                else PP.hsep [name', definition, forall, args', PP.colon, hypotheses, conclusion]
+                then PP.hsep [name', definition, hypotheses, vdash, conclusion]
+                else PP.hsep [name', definition, forall, args', PP.colon, hypotheses, vdash, conclusion]
     Lemma name args hs c proof ->
         let docProof = PP.vcat $ map docTactic proof
             args' = PP.hsep $ map PP.text args
-            hypotheses = undefined
-            conclusion = undefined
+            hypotheses = PP.text "_"
+            conclusion = PP.text "_"
          in  PP.hsep
                 [ PP.text ("L_" <> name)
                 , definition
@@ -159,6 +159,9 @@ docExpr = \case
     isApplication :: Expr -> Bool
     isApplication (Application _ _) = True
     isApplication _                 = False
+
+docExprs :: [Expr] -> PP.Doc
+docExprs xs = PP.brackets $ PP.hcat (PP.punctuate PP.comma (map docExpr xs))
 
 docTactic :: Tactic -> PP.Doc
 docTactic = \case
