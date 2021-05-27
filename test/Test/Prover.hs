@@ -64,16 +64,19 @@ specializeTacticTests =
                         , premises = []
                         , env =
                             M.fromList
-                                [ ("mp", Rule "mp" ["P", "Q"] (FromDerive ["P", "impl" ## "P" ## "Q"] "Q"))
-                                , ("X", Rule "X" [] "X")
+                                [ ("mp", Rule "mp" ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                                , ("X", axiom "X" "X")
                                 ]
                         }
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hs"
-        let Just (Rule name args exp) = st ^. _env . at "Hs"
+        let Just (Rule name args hs c) = st ^. _env . at "Hs"
         name @?= "Hs"
         args @?= ["Q"]
-        exp @?= FromDerive ["X", "impl" ## "X" ## "Q"] "Q"
+        hs @?= ["X", "impl" ## "X" ## "Q"]
+        c @?= "Q"
+
+        -- TODO: Add test that tries to specialize with something that has hypotheses
 
     totalSpecialization = do
         let (a, st) =
@@ -84,18 +87,19 @@ specializeTacticTests =
                         , premises = []
                         , env =
                             M.fromList
-                                [ ("mp", Rule "mp" ["P", "Q"] (FromDerive ["P", "impl" ## "P" ## "Q"] "Q"))
-                                , ("X", Rule "X" [] "X")
-                                , ("Y", Rule "Y" [] "Y")
-                                , ("Hs", Rule "Hs" ["Q"] (FromDerive ["X", "impl" ## "X" ## "Q"] "Q"))
+                                [ ("mp", Rule "mp" ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                                , ("X", axiom "X" "X")
+                                , ("Y", axiom "Y" "Y")
+                                , ("Hs", Rule "Hs" ["Q"] ["X", "impl" ## "X" ## "Q"] "Q")
                                 ]
                         }
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hss"
-        let Just (Rule name args exp) = st ^. _env . at "Hss"
+        let Just (Rule name args hs c) = st ^. _env . at "Hss"
         name @?= "Hss"
         args @?= []
-        exp @?= FromDerive ["X", "impl" ## "X" ## "Y"] "Y"
+        hs @?= ["X", "impl" ## "X" ## "Y"]
+        c @?= "Y"
 
     applicatioSpecialization = do
         let (a, st) =
@@ -106,16 +110,17 @@ specializeTacticTests =
                         , premises = []
                         , env =
                             M.fromList
-                                [ ("r", Rule "r" ["P"] (FromDerive ["impl" ## "P" ## "P"] "P"))
-                                , ("H", Rule "H" [] ("impl" ## "X" ## "Y"))
+                                [ ("r", Rule "r" ["P"] ["impl" ## "P" ## "P"] "P")
+                                , ("H", axiom "H" ("impl" ## "X" ## "Y"))
                                 ]
                         }
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hss"
-        let Just (Rule name args exp) = st ^. _env . at "Hss"
+        let Just (Rule name args hs c) = st ^. _env . at "Hss"
         name @?= "Hss"
         args @?= []
-        exp @?= FromDerive ["impl" ## ("impl" ## "X" ## "Y") ## ("impl" ## "X" ## "Y")] ("impl" ## "X" ## "Y")
+        hs @?= ["impl" ## ("impl" ## "X" ## "Y") ## ("impl" ## "X" ## "Y")]
+        c @?= "impl" ## "X" ## "Y"
 
 exactTacticTests :: TestTree
 exactTacticTests =
@@ -130,7 +135,7 @@ exactTacticTests =
                     (ProofState
                         { goal = "Y"
                         , premises = []
-                        , env = M.fromList [ ("H", Rule "H" [] (FromDerive [] "Y")) ]
+                        , env = M.fromList [("H", axiom "H" "Y")]
                         }
                     )
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
@@ -159,10 +164,10 @@ proofTests =
                         , premises = []
                         , env =
                             M.fromList
-                                [ ("mp", Rule "mp" ["P", "Q"] (FromDerive ["P", "impl" ## "P" ## "Q"] "Q"))
-                                , ("X", Rule "X" [] "X")
-                                , ("Y", Rule "Y" [] "Y")
-                                , ("H", Rule "H" [] ("impl" ## "X" ## "Y"))
+                                [ ("mp", Rule "mp" ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                                , ("X", axiom "X" "X")
+                                , ("Y", axiom "Y" "Y")
+                                , ("H", axiom "H" ("impl" ## "X" ## "Y"))
                                 ]
                         }
                     )

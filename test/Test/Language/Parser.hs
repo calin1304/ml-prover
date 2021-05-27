@@ -63,6 +63,5 @@ declarationParserTests =
 
     ruleParserTest = actual @?= expected
       where
-        expected = Right $ Rule "mp" ["X", "Y"] mp
+        expected = Right $ Rule "mp" ["X", "Y"] ["X", "impl" ## "X" ## Ident "Y"] "Y"
         actual = runParserM parseDeclaration <$> scanner "rule mp X Y := from [X, impl X Y] derive Y"
-        mp = FromDerive [ "X", "impl" ## "X" ## Ident "Y" ] "Y"

@@ -23,17 +23,17 @@ runInterpM = runState . runExceptT
 interp :: Declaration -> InterpM ()
 interp decl =
     case decl of
-        Rule name _ _ -> addDeclaration name decl
-        Lemma name args (FromDerive premises goal) tactics -> do
-            env <- get
-            let
-                introArgs = M.fromList $ map (\x -> (x, Rule x [] (Ident x))) args
-                (result, proofState') =
-                    runProofM
-                        (traverse step tactics)
-                        (ProofState goal premises (M.union introArgs env))
-            seq (debugSection "Proof state" proofState')
-                $ unless (isTop $ proofState' ^. _goal) (throwError "Could not prove top")
+        Rule name _ _ _ -> addDeclaration name decl
+        Lemma name args hs c tactics -> undefined -- do
+            -- env <- get
+            -- let
+            --     introArgs = M.fromList $ map (\x -> (x, Rule x [] (Ident x))) args
+            --     (result, proofState') =
+            --         runProofM
+            --             (traverse step tactics)
+            --             (ProofState goal premises (M.union introArgs env))
+            -- seq (debugSection "Proof state" proofState')
+            --     $ unless (isTop $ proofState' ^. _goal) (throwError "Could not prove top")
         _ -> throwError "Invalid declaration"
 
 addDeclaration :: String -> Declaration -> InterpM ()

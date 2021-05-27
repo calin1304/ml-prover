@@ -27,47 +27,39 @@ docModDef (ModDef name decls) =
 
 data Declaration =
     MetaSym
-        String
-        -- ^ Meta symbol name
-        [SymAttr]
-        -- ^ Meta symbol attributes
+        String    -- ^ Meta symbol name
+        [SymAttr] -- ^ Meta symbol attributes
   | Notation
-        String
-        -- ^ Notation name
-        Signature
-        -- ^ Notation arguments
-        Expr
-        -- ^ Notation expression
-        [SymAttr]
-        -- ^ Notation attributes
+        String    -- ^ Notation name
+        Signature -- ^ Notation arguments
+        Expr      -- ^ Notation expression
+        [SymAttr] -- ^ Notation attributes
   | Import
-        String
-        -- ^ Import name
+        String -- ^ Import name
   | Rule
-        String
-        -- ^ Rule name
-        [String]
-        -- ^ Argument names
-        Expr
-        -- ^ Definition
+        String   -- ^ Rule name
+        [String] -- ^ Argument names
+        [Expr]   -- ^ Hypotheses
+        Expr     -- ^ Conclusion
   | Lemma
-        String
-        -- ^ Lemma name
-        [String]
-        -- ^ Argument names
-        Expr
-        -- ^ Definition
-        [Tactic]
-        -- ^ Proof
+        String   -- ^ Lemma name
+        [String] -- ^ Argument names
+        [Expr]   -- ^ Hypotheses
+        Expr     -- ^ Conclusion
+        [Tactic] -- ^ Proof
     deriving (Eq)
+
+axiom :: String -> Expr -> Declaration
+axiom name e = Rule name [] [] e
 
 instance Show Declaration where
     show = PP.render . docDeclaration
 
 class HasDefinition a where
-    getDefinition :: a -> Expr
+    getDefinition :: a -> ([Expr], Expr)
+
 instance HasDefinition Declaration where
-    getDefinition (Rule _ _ e) = e
+    getDefinition (Rule _ _ hs e) = (hs, e)
     getDefinition _ = undefined
 
 data Tactic =
@@ -80,7 +72,6 @@ data Tactic =
 data Expr =
     Ident String
   | Application Expr Expr
-  | FromDerive [Expr] Expr
     deriving (Eq)
 
 instance Show Expr where
@@ -130,25 +121,33 @@ docDeclaration = \case
     MetaSym name _ -> PP.text name
     Notation name _ def _ -> docDef name def
     Import name -> PP.text name
-    Rule name args def ->
-        if null args
-            then docDef name def
-            else PP.hsep [PP.text name, definition, forall, PP.text (intercalate " " args), PP.char ':', docExpr def]
-    Lemma name args def proof ->
+    Rule name args hs c ->
+        let name' = PP.text name
+            args' = PP.text (intercalate " " args)
+            hypotheses = undefined
+            conclusion = undefined
+         in if null args
+                then undefined -- docDef name hypotheses conclusion
+                else PP.hsep [name', definition, forall, args', PP.colon, hypotheses, conclusion]
+    Lemma name args hs c proof ->
         let docProof = PP.vcat $ map docTactic proof
+            args' = PP.hsep $ map PP.text args
+            hypotheses = undefined
+            conclusion = undefined
          in  PP.hsep
                 [ PP.text ("L_" <> name)
                 , definition
                 , forall
-                , PP.hsep $ map PP.text args
+                , args'
                 , PP.colon
-                , docExpr def
+                , hypotheses
+                , conclusion
                 ]
                 $+$ PP.nest 4 (docProof $+$ qed)
 
 
 docDef :: String -> Expr -> PP.Doc
-docDef name expr = PP.text name <+> definition <+> docExpr expr
+docDef name expr  = PP.text name <+> definition <+> docExpr expr
 
 docExpr :: Expr -> PP.Doc
 docExpr = \case
@@ -156,9 +155,6 @@ docExpr = \case
     Application e1 e2 ->
         let e2' = (if isApplication e2 then PP.parens else id) (docExpr e2)
          in docExpr e1 <+> e2'
-    FromDerive pres e ->
-        let docPres = if null pres then PP.empty else PP.text (show pres) -- TODO: doc pres
-         in docPres <+> vdash <+> docExpr e
   where
     isApplication :: Expr -> Bool
     isApplication (Application _ _) = True

@@ -22,6 +22,7 @@ import           Prover.Substitution
 import           Prover.Types
 import           Utils
 
+-- TODO: Add ExceptT for failure signaling
 type ProofM a = State ProofState a
 
 type ProofEnv = Map String Declaration
@@ -67,12 +68,12 @@ step = \case
 
 -- FIXME: Doesn't work with implication
 intros :: Name -> ProofM ()
-intros asName =
-    modify $ \st -> do
-        let (pre, rest) = uncons (premises st) & fromMaybe (error "Trying to intros with no premises")
-        st
-            & _env %~ M.insert asName (Rule asName [] pre)
-            & _premises .~ rest 
+intros asName = undefined
+    -- modify $ \st -> do
+    --     let (pre, rest) = uncons (premises st) & fromMaybe (error "Trying to intros with no premises")
+    --     st
+    --         & _env %~ M.insert asName (Rule asName [] pre)
+    --         & _premises .~ rest 
 
 {-
     Instantiate arguments of a rule.
@@ -95,14 +96,16 @@ specialize' expr =
     case expr of
         Application (Ident i) (Ident j) -> do
             r <- lookupSymbol i
-            e2 <- getDefinition <$> lookupSymbol j
+            e2 <- snd . getDefinition <$> lookupSymbol j -- TODO: Check that there are no hypotheses
             case r of
-                Rule name args def ->
+                Rule name args hs c ->
                     case args of
                         [] -> error "Not enough arguments to specialize"
                         (x:xs) -> do
                             let subst = mkSubst [(x, e2)]
-                            pure $ Rule name xs (applySubst subst def)
+                            let hs' = map (applySubst subst) hs
+                            let c' = applySubst subst c
+                            pure $ Rule name xs hs' c'
                 _ -> error "Symbol not a rule"
         _ -> error "Invalid specialize argument"
 
@@ -113,12 +116,12 @@ apply sym subproofs = do
     r <- lookupSymbol sym
     goal <- use _goal
     case r of
-        Rule _ [] e -> when (consequence e `matches` goal) proveHypos
+        Rule _ [] _ e -> when (consequence e `matches` goal) proveHypos
         _ -> error "Can't apply"
   where
-    consequence = \case
-        FromDerive hs c -> c
-        e -> error $ printf "Invalid expression %s" (show e)
+    consequence = undefined -- \case
+        -- FromDerive hs c -> c
+        -- e -> error $ printf "Invalid expression %s" (show e)
     proveHypos = undefined
 
 matches = (==)
@@ -134,13 +137,14 @@ assumptions name asName = do
         (addRule (withoutHypotheses r) asName)
   where
     withoutHypotheses :: Declaration -> Declaration
-    withoutHypotheses (Rule name args (FromDerive hs c)) = Rule name args (FromDerive [] c)
+    withoutHypotheses (Rule name args hs c) = Rule name args [] c
 
     hypothese :: Declaration -> [Expr]
-    hypothese (Rule _ _ (FromDerive hs _)) = hs
+    hypothese (Rule _ _ hs _) = hs
 
     isInCtx :: Expr -> ProofM Bool
-    isInCtx e = uses _env ((e `elem`) . fmap getDefinition)
+    isInCtx e = uses _env ((e `elem`) . fmap (snd . getDefinition))
+     -- ^ TODO: What to do with hypotheses from definition? Add test for that.
 
 exact :: Name -> ProofM ()
 exact name =
@@ -157,7 +161,7 @@ exact' name = do
     goal <- use _goal
     r <- lookupSymbol name
     case r of
-        Rule _ _ (FromDerive [] c) -> pure $ goal == c
+        Rule _ _ [] c -> pure $ goal == c
         _ -> pure False
 
 -------------
@@ -165,10 +169,10 @@ exact' name = do
 -------------
 
 addRule :: Declaration -> Name -> ProofM ()
-addRule (Rule name args e) asName = _env %= M.insert asName (Rule asName args e)
+addRule (Rule name args hs c) asName = _env %= M.insert asName (Rule asName args hs c)
 
-addToEnv :: Expr -> String -> ProofM ()
-addToEnv expr asName = addRule (Rule asName [] expr) asName
+addToEnv :: [Expr] -> Expr -> String -> ProofM ()
+addToEnv hs c asName = addRule (Rule asName [] hs c) asName
 
 lookupSymbol :: Name -> ProofM Declaration
 lookupSymbol name = 

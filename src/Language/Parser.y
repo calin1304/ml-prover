@@ -82,8 +82,6 @@ Declaration :: { Declaration }
   : metaSym ident '[' Attrs ']' { MetaSym $2 $4 }
   | notation ident Signature ":=" Expr '[' Attrs ']' { Notation $2 $3 $5 $7 }
   | imports ident { Import $2 }
-  | rule ident Idents ":=" FromDerive {% addDecl_ (Rule $2 (reverse $3) $5) }
-  | lemma ident Idents ":=" FromDerive Proof { Lemma $2 (reverse $3) $5 $6 }
 
 Proof :: { [Tactic] }
     : proof Tactics qed { reverse $2 }
@@ -120,10 +118,6 @@ Expr :: { Expr }
   : ident               { Ident $1 }
   | Expr Expr %prec APP { Application $1 $2 }
   | '(' Expr ')'        { $2 }
-
-FromDerive :: { Expr }
-    : from '[' ']' derive Expr { FromDerive [] $5 }
-    | from '[' Exprs1 ']' derive Expr { FromDerive (reverse $3) $6 }
 
 Attrs :: { [SymAttr] }
     : {- empty -}           { [] }

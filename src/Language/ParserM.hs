@@ -33,8 +33,7 @@ addDeclaration decl =
         --     -- Check if we have references to unknown symbols in definition
         --     whenM (checkDef def) (error $ printf "%s not defined" name)
         --     modify $ \env -> env { names = (name, expr) : names env }
-        Rule name _ _ ->
-            modify $ \env -> env { names = (name, decl) : names env }
+        Rule name _ _ _ -> modify $ \env -> env { names = (name, decl) : names env }
         _ -> undefined
 
 addDecl_ :: Declaration -> ParserM Declaration

@@ -10,8 +10,8 @@ import qualified Test.Prover as Prover (tests)
 main =
     defaultMain
         $ testGroup "Tests"
-            [ Parser.tests
-            , Tactics.tests
-            , Substitution.tests
-            , Prover.tests
+            [ -- Parser.tests
+            -- , Tactics.tests
+            -- , Substitution.tests
+            Prover.tests
             ]

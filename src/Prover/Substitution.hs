@@ -17,4 +17,3 @@ applySubst :: Subst -> Expr -> Expr
 applySubst subst@(Subst s) = \case
     Ident name -> fromMaybe (Ident name) $ M.lookup name s
     Application e1 e2 -> Application (applySubst subst e1) (applySubst subst e2)
-    FromDerive ps es -> FromDerive (map (applySubst subst) ps) (applySubst subst es)
