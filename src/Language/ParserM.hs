@@ -3,12 +3,12 @@ module Language.ParserM where
 import           Control.Monad       (unless)
 import           Control.Monad.Extra (andM, whenM)
 import           Control.Monad.State
+import           Data.List           (intercalate)
 import           Data.Maybe          (isJust)
-import Data.List (intercalate)
-import qualified Text.PrettyPrint as PP
+import qualified Text.PrettyPrint    as PP
 
-import           Language.Syntax
 import           Language.Lexer
+import           Language.Syntax
 import           Utils
 
 type ParserM a = State ParserState a

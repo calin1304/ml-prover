@@ -1,22 +1,22 @@
 module Prover.ProofM where
 
-import Data.List (intercalate)
 import           Control.Arrow                ((&&&))
 import           Control.Lens
+import           Control.Monad.Except
 import           Control.Monad.State
+import           Data.Bool                    (bool)
 import           Data.Function                ((&))
-import Data.Functor ((<&>))
+import           Data.Functor                 ((<&>))
 import           Data.Generics.Product.Fields (field)
+import           Data.List                    (intercalate)
+import           Data.Map                     (Map (..))
+import qualified Data.Map                     as M (insert, lookup, toList)
 import           Data.Maybe                   (fromMaybe)
 import           GHC.Generics                 (Generic)
 import           Test.QuickCheck              (Arbitrary, arbitrary)
+import           Text.PrettyPrint             (($+$))
+import qualified Text.PrettyPrint             as PP
 import           Text.Printf                  (printf)
-import Data.Map (Map (..))
-import qualified Data.Map as M (insert, lookup, toList)
-import qualified Text.PrettyPrint as PP
-import Text.PrettyPrint (($+$))
-import Data.Bool (bool)
-import Control.Monad.Except
 
 import           Language.Syntax
 import           Prover.Substitution
@@ -24,7 +24,7 @@ import           Prover.Types
 import           Utils
 
 type ProverError = String
-type ProofM = StateT ProofState (Except ProverError) 
+type ProofM = StateT ProofState (Except ProverError)
 
 type ProofEnv = Map String Declaration
 
@@ -74,11 +74,11 @@ intros asName = undefined
     --     let (pre, rest) = uncons (premises st) & fromMaybe (throwError "Trying to intros with no premises")
     --     st
     --         & _env %~ M.insert asName (Rule asName [] pre)
-    --         & _premises .~ rest 
+    --         & _premises .~ rest
 
 {-
     Instantiate arguments of a rule.
-    
+
     TODO: First argument is an expression but, ideally, it should just be
         an application of arguments to a name.
 -}
@@ -118,7 +118,7 @@ apply sym subproofs = do
     goal <- use _goal
     case r of
         Rule _ [] _ e -> when (consequence e `matches` goal) proveHypos
-        _ -> throwError "Can't apply"
+        _             -> throwError "Can't apply"
   where
     consequence = undefined -- \case
         -- FromDerive hs c -> c
@@ -153,7 +153,7 @@ exact name =
         True -> _goal .=  (Ident "top")
         False -> do
             get
-                >>= throwError 
+                >>= throwError
                         . printf "exact: Could not match formula %s with goal\nProof state:\n%s" name
                         . show
 
@@ -163,7 +163,7 @@ exact' name = do
     r <- lookupSymbol name
     case r of
         Rule _ _ [] c -> pure $ goal == c
-        _ -> pure False
+        _             -> pure False
 
 -------------
 -- Helpers --

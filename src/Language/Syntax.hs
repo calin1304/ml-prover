@@ -1,14 +1,14 @@
 module Language.Syntax where
 
-import           Data.List       (intercalate)
+import           Data.List        (intercalate)
+import           Data.String      (IsString, fromString)
 import           Test.QuickCheck
-import Text.Printf (printf)
+import           Text.PrettyPrint (($+$), (<+>))
 import qualified Text.PrettyPrint as PP
-import Text.PrettyPrint ((<+>), ($+$))
-import Data.String (IsString, fromString)
+import           Text.Printf      (printf)
 
 import           Language.Lexer
-import Print
+import           Print
 
 newtype Source = Source [ModDef]
     deriving (Show)
@@ -60,7 +60,7 @@ class HasDefinition a where
 
 instance HasDefinition Declaration where
     getDefinition (Rule _ _ hs e) = (hs, e)
-    getDefinition _ = undefined
+    getDefinition _               = undefined
 
 data Tactic =
     Intros String
@@ -158,7 +158,7 @@ docExpr = \case
   where
     isApplication :: Expr -> Bool
     isApplication (Application _ _) = True
-    isApplication _ = False
+    isApplication _                 = False
 
 docTactic :: Tactic -> PP.Doc
 docTactic = \case

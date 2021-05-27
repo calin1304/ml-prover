@@ -1,13 +1,13 @@
 module Test.Language.Parser where
 
-import Test.Tasty
-import Test.Tasty.HUnit
-import Test.Tasty.QuickCheck
+import           Test.Tasty
+import           Test.Tasty.HUnit
+import           Test.Tasty.QuickCheck
 
-import Language.Syntax
-import Language.Lexer
-import Language.Parser
-import Language.ParserM
+import           Language.Lexer
+import           Language.Parser
+import           Language.ParserM
+import           Language.Syntax
 
 tests :: TestTree
 tests =

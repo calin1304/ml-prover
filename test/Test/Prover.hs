@@ -2,19 +2,19 @@ module Test.Prover
     ( tests
     ) where
 
-import Test.Tasty
-import Test.Tasty.HUnit
-import Test.Tasty.QuickCheck
-import qualified Data.Map.Strict as M (fromList)
-import Control.Lens
-import Data.Maybe (isJust)
+import           Control.Lens
+import qualified Data.Map.Strict       as M (fromList)
+import           Data.Maybe            (isJust)
+import           Test.Tasty
+import           Test.Tasty.HUnit
+import           Test.Tasty.QuickCheck
 
-import Language.Syntax
-import Language.Lexer
-import Language.Parser
-import Language.ParserM
-import Prover.ProofM
-import Interp (isTop)
+import           Interp                (isTop)
+import           Language.Lexer
+import           Language.Parser
+import           Language.ParserM
+import           Language.Syntax
+import           Prover.ProofM
 
 tests :: TestTree
 tests = testGroup "Prover"
@@ -30,9 +30,9 @@ test_prop_logic = undefined -- actual @?= expected
 
 --     source :: IO String
 --     source = readFile "test/data/test_prop_logic.mlp"
-    
+
 --     checkFile :: FilePath -> IO (Either e ())
---     checkFile = parseFile >>= runInterpM 
+--     checkFile = parseFile >>= runInterpM
 
 {-
 specialize tests
@@ -47,7 +47,7 @@ env: H1 : X, H2 : X -> Y : H3 : Y
 -}
 
 specializeTacticTests :: TestTree
-specializeTacticTests = 
+specializeTacticTests =
     testGroup "specialize tactic"
         [ testCase "partial specialization" partialSpecialization
         , testCase "total specialization" totalSpecialization
@@ -141,7 +141,7 @@ exactTacticTests =
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
 
 proofTests :: TestTree
-proofTests = 
+proofTests =
     testGroup "proofs"
         [ testCase "simple proof" proofTest
         ]

@@ -1,8 +1,8 @@
 module Utils where
 
-import           Data.Maybe  (fromJust)
-import           Text.Printf (printf)
-import System.IO.Unsafe (unsafePerformIO)
+import           Data.Maybe       (fromJust)
+import           System.IO.Unsafe (unsafePerformIO)
+import           Text.Printf      (printf)
 
 allA :: (Applicative f, Traversable t) => (a -> f Bool) -> t a -> f Bool
 allA p = fmap and . traverse p

@@ -1,6 +1,6 @@
 module Print where
 
-import Text.PrettyPrint
+import           Text.PrettyPrint
 
 top :: Doc
 top = char '⊤'
