@@ -16,14 +16,15 @@ import qualified Data.Map as M (insert, lookup, toList)
 import qualified Text.PrettyPrint as PP
 import Text.PrettyPrint (($+$))
 import Data.Bool (bool)
+import Control.Monad.Except
 
 import           Language.Syntax
 import           Prover.Substitution
 import           Prover.Types
 import           Utils
 
--- TODO: Add ExceptT for failure signaling
-type ProofM a = State ProofState a
+type ProverError = String
+type ProofM = StateT ProofState (Except ProverError) 
 
 type ProofEnv = Map String Declaration
 
@@ -52,8 +53,8 @@ _env = field @"env"
 instance Show ProofState where
     show = PP.render . docProofState
 
-runProofM :: ProofM a -> ProofState -> (a, ProofState)
-runProofM = runState
+runProofM :: ProofM a -> ProofState -> Either ProverError (a, ProofState)
+runProofM m st = runExcept $ runStateT m st
 
 step :: Tactic -> ProofM ()
 step = \case
@@ -70,7 +71,7 @@ step = \case
 intros :: Name -> ProofM ()
 intros asName = undefined
     -- modify $ \st -> do
-    --     let (pre, rest) = uncons (premises st) & fromMaybe (error "Trying to intros with no premises")
+    --     let (pre, rest) = uncons (premises st) & fromMaybe (throwError "Trying to intros with no premises")
     --     st
     --         & _env %~ M.insert asName (Rule asName [] pre)
     --         & _premises .~ rest 
@@ -88,7 +89,7 @@ specialize expr asName = specialize' expr >>= (`addRule` asName)
             -- (sdef, sargs) <- (getDefinition &&& getArgs) <$> lookupSymbol sym
             -- let s = mkSubst sargs args
             -- addToEnv (applySubst s sdef) asName
-        -- _ -> error "Invalid specialize argument"
+        -- _ -> throwError "Invalid specialize argument"
 
 -- TODO: Make it work with nested applications, for example "mp P Q"
 specialize' :: Expr -> ProofM Declaration
@@ -100,14 +101,14 @@ specialize' expr =
             case r of
                 Rule name args hs c ->
                     case args of
-                        [] -> error "Not enough arguments to specialize"
+                        [] -> throwError "Not enough arguments to specialize"
                         (x:xs) -> do
                             let subst = mkSubst [(x, e2)]
                             let hs' = map (applySubst subst) hs
                             let c' = applySubst subst c
                             pure $ Rule name xs hs' c'
-                _ -> error "Symbol not a rule"
-        _ -> error "Invalid specialize argument"
+                _ -> throwError "Symbol not a rule"
+        _ -> throwError "Invalid specialize argument"
 
 -- | @apply name subproofs@ tries to match @name@ with the current goal, and if that's the
 -- case, then checks @subproofs@ which coressponds to proofs for all the hypotheses.
@@ -117,11 +118,11 @@ apply sym subproofs = do
     goal <- use _goal
     case r of
         Rule _ [] _ e -> when (consequence e `matches` goal) proveHypos
-        _ -> error "Can't apply"
+        _ -> throwError "Can't apply"
   where
     consequence = undefined -- \case
         -- FromDerive hs c -> c
-        -- e -> error $ printf "Invalid expression %s" (show e)
+        -- e -> throwError $ printf "Invalid expression %s" (show e)
     proveHypos = undefined
 
 matches = (==)
@@ -133,7 +134,7 @@ assumptions :: Name -> Name -> ProofM ()
 assumptions name asName = do
     r <- lookupSymbol name
     allA isInCtx (hypothese r) >>= bool
-        (error "Could not satisfy all hypos")
+        (throwError "Could not satisfy all hypos")
         (addRule (withoutHypotheses r) asName)
   where
     withoutHypotheses :: Declaration -> Declaration
@@ -152,7 +153,7 @@ exact name =
         True -> _goal .=  (Ident "top")
         False -> do
             get
-                >>= error 
+                >>= throwError 
                         . printf "exact: Could not match formula %s with goal\nProof state:\n%s" name
                         . show
 
@@ -175,9 +176,9 @@ addToEnv :: [Expr] -> Expr -> String -> ProofM ()
 addToEnv hs c asName = addRule (Rule asName [] hs c) asName
 
 lookupSymbol :: Name -> ProofM Declaration
-lookupSymbol name = 
+lookupSymbol name = do
     use (_env . at name)
-        <&> fromMaybe (error $ printf "Symbol %s not found\n." name)
+        >>= maybe (throwError $ printf "Symbol %s not found\n." name) pure
 
 ---------------------
 -- Pretty printing --

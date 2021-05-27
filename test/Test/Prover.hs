@@ -56,7 +56,7 @@ specializeTacticTests =
   where
     -- TODO: Test that it fails if rule to specialize is not in the context
     partialSpecialization = do
-        let (a, st) =
+        let Right (a, st) =
                 runProofM
                     (specialize ("mp" ## "X") "Hs")
                     (ProofState
@@ -79,7 +79,7 @@ specializeTacticTests =
         -- TODO: Add test that tries to specialize with something that has hypotheses
 
     totalSpecialization = do
-        let (a, st) =
+        let Right (a, st) =
                 runProofM
                     (specialize ("Hs" ## "Y") "Hss")
                     (ProofState
@@ -102,7 +102,7 @@ specializeTacticTests =
         c @?= "Y"
 
     applicatioSpecialization = do
-        let (a, st) =
+        let Right (a, st) =
                 runProofM
                     (specialize ("r" ## "H") "Hss")
                     (ProofState
@@ -129,7 +129,7 @@ exactTacticTests =
         ]
   where
     exactTest = do
-        let (a, st) =
+        let Right (a, st) =
                 runProofM
                     (exact "H")
                     (ProofState
@@ -156,7 +156,7 @@ proofTests =
                 --     ]
                 assumptions "H2" "H3"
                 exact "H3"
-        let (a, st) =
+        let Right (a, st) =
                 runProofM
                     proof
                     (ProofState
