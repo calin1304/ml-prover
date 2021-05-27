@@ -145,6 +145,7 @@ proofTests =
     testGroup "proofs"
         [ testCase "simple proof" proofTest
         , testCase "mp2" proof_mp2
+        , testCase "mpd" proof_mpd
         ]
   where
     proofTest = do
@@ -194,4 +195,29 @@ proofTests =
                                 ]
                         }
                     )
+        assertEqual "goal is top" "top" (st ^. _goal)
+
+    proof_mpd = do
+        let proof = do
+                apply "X0"
+                    [ apply "X1" []
+                    , apply "X"
+                        [ apply "X" [] -- FIXME: This should fail but it doesn't
+                        ]
+                    ]
+        let Right (a, st) =
+                runProofM
+                    proof
+                    (ProofState
+                        { goal = "R"
+                        , premises = []
+                        , env =
+                            M.fromList
+                                [ ("X", Rule "X" [] ["P"] "Q")
+                                , ("X0", Rule "X0" [] ["P", "Q"] "R")
+                                , ("X1", Rule "X1" [] [] "P")
+                                ]
+                        }
+                    )
+        print st
         assertEqual "goal is top" "top" (st ^. _goal)
