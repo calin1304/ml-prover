@@ -15,6 +15,7 @@ import Data.Map (Map (..))
 import qualified Data.Map as M (insert, lookup, toList)
 import qualified Text.PrettyPrint as PP
 import Text.PrettyPrint (($+$))
+import Data.Bool (bool)
 
 import           Language.Syntax
 import           Prover.Substitution
@@ -105,12 +106,41 @@ specialize' expr =
                 _ -> error "Symbol not a rule"
         _ -> error "Invalid specialize argument"
 
-apply :: Expr -> String -> ProofM ()
-apply = undefined
+-- | @apply name subproofs@ tries to match @name@ with the current goal, and if that's the
+-- case, then checks @subproofs@ which coressponds to proofs for all the hypotheses.
+apply :: String -> [[ProofM ()]] -> ProofM ()
+apply sym subproofs = do
+    r <- lookupSymbol sym
+    goal <- use _goal
+    case r of
+        Rule _ [] e -> when (consequence e `matches` goal) proveHypos
+        _ -> error "Can't apply"
+  where
+    consequence = \case
+        FromDerive hs c -> c
+        e -> error $ printf "Invalid expression %s" (show e)
+    proveHypos = undefined
+
+matches = (==)
+
+-- check goal with consequence => proove all hypotheses
 
 -- Tactic lookups the goal in assumptions
-assumption :: ProofM ()
-assumption = undefined
+assumptions :: Name -> Name -> ProofM ()
+assumptions name asName = do
+    r <- lookupSymbol name
+    allA isInCtx (hypothese r) >>= bool
+        (error "Could not satisfy all hypos")
+        (addRule (withoutHypotheses r) asName)
+  where
+    withoutHypotheses :: Declaration -> Declaration
+    withoutHypotheses (Rule name args (FromDerive hs c)) = Rule name args (FromDerive [] c)
+
+    hypothese :: Declaration -> [Expr]
+    hypothese (Rule _ _ (FromDerive hs _)) = hs
+
+    isInCtx :: Expr -> ProofM Bool
+    isInCtx e = uses _env ((e `elem`) . fmap getDefinition)
 
 exact :: Name -> ProofM ()
 exact name =
@@ -119,11 +149,16 @@ exact name =
         False -> do
             get
                 >>= error 
-                        . printf "exact: Could not match formula with goal\nProof state:\n%s"
+                        . printf "exact: Could not match formula %s with goal\nProof state:\n%s" name
                         . show
 
 exact' :: Name -> ProofM Bool
-exact' name = (==) <$> gets goal <*> (getDefinition <$> lookupSymbol name)
+exact' name = do
+    goal <- use _goal
+    r <- lookupSymbol name
+    case r of
+        Rule _ _ (FromDerive [] c) -> pure $ goal == c
+        _ -> pure False
 
 -------------
 -- Helpers --

@@ -130,7 +130,7 @@ exactTacticTests =
                     (ProofState
                         { goal = "Y"
                         , premises = []
-                        , env = M.fromList [ ("H", Rule "H" [] "Y") ]
+                        , env = M.fromList [ ("H", Rule "H" [] (FromDerive [] "Y")) ]
                         }
                     )
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
@@ -143,9 +143,14 @@ proofTests =
   where
     proofTest = do
         let proof = do
-                specialize ("mp" ## "X") "Hs"
-                specialize ("Hs" ## "Y") "Hss"
-                apply "Hss"
+                specialize ("mp" ## "X") "H1"
+                specialize ("H1" ## "Y") "H2"
+                -- apply "Hss"
+                --     [ [ exact "X"]
+                --     , [ exact "H"]
+                --     ]
+                assumptions "H2" "H3"
+                exact "H3"
         let (a, st) =
                 runProofM
                     proof
