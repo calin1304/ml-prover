@@ -5,6 +5,7 @@ import           Control.Lens
 import           Control.Monad.Except
 import           Control.Monad.State
 import           Data.Bool                    (bool)
+import           Data.Foldable                (traverse_)
 import           Data.Function                ((&))
 import           Data.Functor                 ((<&>))
 import           Data.Generics.Product.Fields (field)
@@ -112,18 +113,23 @@ specialize' expr =
 
 -- | @apply name subproofs@ tries to match @name@ with the current goal, and if that's the
 -- case, then checks @subproofs@ which coressponds to proofs for all the hypotheses.
-apply :: String -> [[ProofM ()]] -> ProofM ()
+apply :: String -> [ProofM ()] -> ProofM ()
 apply sym subproofs = do
     r <- lookupSymbol sym
     goal <- use _goal
     case r of
-        Rule _ [] _ e -> when (consequence e `matches` goal) proveHypos
+        Rule _ [] hs c -> when (c `matches` goal) (checkHypos (zip hs subproofs) >> setGoal "top") -- TODO: check we have as many proofs as hypotheses
         _             -> throwError "Can't apply"
   where
-    consequence = undefined -- \case
-        -- FromDerive hs c -> c
-        -- e -> throwError $ printf "Invalid expression %s" (show e)
-    proveHypos = undefined
+    checkHypos :: [(Expr, ProofM ())] -> ProofM ()
+    checkHypos = traverse_ (uncurry checkNew)
+
+    checkNew :: Goal -> ProofM () -> ProofM ()
+    checkNew newGoal proof = do
+        st <- get
+        case runProofM proof (st { goal = newGoal }) of
+            Right _ -> pure ()
+            Left e  -> throwError e
 
 matches = (==)
 
@@ -179,6 +185,9 @@ lookupSymbol :: Name -> ProofM Declaration
 lookupSymbol name = do
     use (_env . at name)
         >>= maybe (throwError $ printf "Symbol %s not found\n." name) pure
+
+setGoal :: Goal -> ProofM ()
+setGoal = assign _goal
 
 ---------------------
 -- Pretty printing --

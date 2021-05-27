@@ -144,6 +144,7 @@ proofTests :: TestTree
 proofTests =
     testGroup "proofs"
         [ testCase "simple proof" proofTest
+        , testCase "mp2" proof_mp2
         ]
   where
     proofTest = do
@@ -172,3 +173,25 @@ proofTests =
                         }
                     )
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
+
+    proof_mp2 = do
+        let proof = do
+                apply "X1"
+                    [ apply "X"  []
+                    , apply "X0" []
+                    ]
+        let Right (a, st) =
+                runProofM
+                    proof
+                    (ProofState
+                        { goal = "R"
+                        , premises = []
+                        , env =
+                            M.fromList
+                                [ ("X", axiom "X" "P")
+                                , ("X0", axiom "X0" "Q")
+                                , ("X1", Rule "X1" [] ["P", "Q"] "R")
+                                ]
+                        }
+                    )
+        assertEqual "goal is top" "top" (st ^. _goal)
