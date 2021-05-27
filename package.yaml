@@ -21,6 +21,7 @@ description:         Please see the README on GitHub at <https://github.com/cali
 
 # Make sure to also add extension to .stylish-haskell
 default-extensions:
+- BlockArguments
 - DataKinds
 - DeriveGeneric
 - DerivingStrategies
