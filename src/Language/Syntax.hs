@@ -50,7 +50,7 @@ data Declaration =
     deriving (Eq)
 
 axiom :: String -> Expr -> Declaration
-axiom name e = Rule name [] [] e
+axiom name = Rule name [] []
 
 instance Show Declaration where
     show = PP.render . docDeclaration
@@ -89,7 +89,7 @@ data Signature =
   | Signature [Argument]
     deriving (Eq, Show)
 
-data Argument = Argument String
+newtype Argument = Argument String
     deriving (Eq, Show)
 
 data SymAttr =
@@ -123,7 +123,7 @@ docDeclaration = \case
     Import name -> PP.text name
     Rule name args hs c ->
         let name' = PP.text name
-            args' = PP.text (intercalate " " args)
+            args' = PP.text $ unwords args
             hypotheses = undefined
             conclusion = undefined
          in if null args

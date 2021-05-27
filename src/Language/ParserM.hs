@@ -3,6 +3,7 @@ module Language.ParserM where
 import           Control.Monad       (unless)
 import           Control.Monad.Extra (andM, whenM)
 import           Control.Monad.State
+import           Data.Functor        (($>))
 import           Data.List           (intercalate)
 import           Data.Maybe          (isJust)
 import qualified Text.PrettyPrint    as PP
@@ -13,7 +14,7 @@ import           Utils
 
 type ParserM a = State ParserState a
 
-data ParserState = ParserState
+newtype ParserState = ParserState
     { names :: [(String, Declaration)]
     }
 
@@ -21,7 +22,7 @@ instance Show ParserState where
     show = PP.render . docParserState
 
 runParserM :: ([LexemeClass] -> ParserM a)-> [LexemeClass] -> a
-runParserM p ls = fst $ runState (p ls) emptyState
+runParserM p ls = evalState (p ls) emptyState
   where
     emptyState = ParserState []
 
@@ -37,7 +38,7 @@ addDeclaration decl =
         _ -> undefined
 
 addDecl_ :: Declaration -> ParserM Declaration
-addDecl_ decl = addDeclaration decl *> pure decl
+addDecl_ decl = addDeclaration decl $> decl
 
 getName :: String -> ParserM (Maybe Declaration)
 getName name = gets (lookup name . names)

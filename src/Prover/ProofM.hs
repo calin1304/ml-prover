@@ -150,7 +150,7 @@ assumptions name asName = do
 exact :: Name -> ProofM ()
 exact name =
     exact' name >>= \case
-        True -> _goal .=  (Ident "top")
+        True -> _goal .= Ident "top"
         False -> do
             get
                 >>= throwError

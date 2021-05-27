@@ -58,7 +58,7 @@ declarationParserTests =
 
     metaSymParserTest = actual @?= expected
       where
-        expected = Right $ MetaSym "exists" [(Arity 2), Binder]
+        expected = Right $ MetaSym "exists" [Arity 2, Binder]
         actual = runParserM parseDeclaration <$> scanner "meta-symbol exists [arity 2, binder 1 2]"
 
     ruleParserTest = actual @?= expected
