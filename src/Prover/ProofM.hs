@@ -118,7 +118,10 @@ apply sym subproofs = do
     r <- lookupSymbol sym
     goal <- use _goal
     case r of
-        Rule _ [] hs c -> when (c `matches` goal) (checkHypos (zip hs subproofs) >> setGoal "top") -- TODO: check we have as many proofs as hypotheses
+        Rule _ [] hs c ->
+            if c `matches` goal
+                then checkHypos (zip hs subproofs) >> setGoal "top" -- TODO: check we have as many proofs as hypotheses
+                else throwError "Goal doesn't match conclusion of applied formula"
         _             -> throwError "Can't apply"
   where
     checkHypos :: [(Expr, ProofM ())] -> ProofM ()

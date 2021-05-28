@@ -3,6 +3,7 @@ module Test.Prover
     ) where
 
 import           Control.Lens
+import           Data.Either           (isLeft)
 import qualified Data.Map.Strict       as M (fromList)
 import           Data.Maybe            (isJust)
 import           Test.Tasty
@@ -20,6 +21,7 @@ tests :: TestTree
 tests = testGroup "Prover"
     [ specializeTacticTests
     , exactTacticTests
+    , applyTacticTests
     , proofTests
     ]
 
@@ -140,6 +142,40 @@ exactTacticTests =
                     )
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
 
+applyTacticTests :: TestTree
+applyTacticTests =
+    testGroup "apply tactic"
+        [ testCase "works as exact if there are no hypotheses" noHypotheses
+        , testCase "fails if goal doesn't match conclusion" noMatch
+        ]
+  where
+    noHypotheses = do
+        let result =
+                runProofM
+                    (apply "H" [])
+                    (ProofState
+                        { goal = "P"
+                        , premises = []
+                        , env = M.fromList [("H", Rule "H" [] [] "P")]
+                        }
+                    )
+        case result of
+            Left e -> assertFailure e
+            Right (a, st) -> assertBool "goal is satisfied" $ isTop $ st ^. _goal
+
+    noMatch = do
+        let result =
+                runProofM
+                    (apply "H" [])
+                    (ProofState
+                        { goal = "P"
+                        , premises = []
+                        , env = M.fromList [("H", Rule "H" [] [] "Q")]
+                        }
+                    )
+        assertBool "fail because goal doesn't match conclusion of applied formula"
+            $ isLeft result
+
 proofTests :: TestTree
 proofTests =
     testGroup "proofs"
@@ -202,7 +238,7 @@ proofTests =
                 apply "X0"
                     [ apply "X1" []
                     , apply "X"
-                        [ apply "X" [] -- FIXME: This should fail but it doesn't
+                        [ apply "X1" [] -- FIXME: This should fail but it doesn't
                         ]
                     ]
         let Right (a, st) =
