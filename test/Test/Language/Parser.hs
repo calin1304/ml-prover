@@ -1,13 +1,18 @@
-module Test.Language.Parser where
+module Test.Language.Parser
+    ( tests
+    ) where
 
-import           Test.Tasty
-import           Test.Tasty.HUnit
-import           Test.Tasty.QuickCheck
+import           Test.Tasty       (TestTree, testGroup)
+import           Test.Tasty.HUnit (testCase, (@?=))
 
-import           Language.Lexer
-import           Language.Parser
-import           Language.ParserM
-import           Language.Syntax
+import           Language.Lexer   (scanner)
+import           Language.Parser  (parseDeclaration, parseExpression)
+import           Language.ParserM (runParserM)
+import           Language.Syntax  (Argument (Argument),
+                                   Declaration (MetaSym, Notation, Rule),
+                                   Expr (Ident), Signature (Signature),
+                                   SymAttr (Arity, Binder, Folded, NotNegative),
+                                   ( ## ))
 
 tests :: TestTree
 tests =
@@ -37,8 +42,8 @@ declarationParserTests :: TestTree
 declarationParserTests =
     testGroup "declaration parser"
         [ testCase "rule" ruleParserTest
-        -- , testCase "metaSymParser" metaSymParserTest
-        -- , testCase "notationParser" notationParserTest
+        , testCase "metaSymParser" metaSymParserTest
+        , testCase "notationParser" notationParserTest
         ]
   where
     notationParserTest = actual @?= expected

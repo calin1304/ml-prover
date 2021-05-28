@@ -1,5 +1,6 @@
 module Prover.ProofM
-    ( assumptions
+    ( ProofState (..)
+    , assumptions
     , apply
     , specialize
     , runProofM
@@ -7,6 +8,8 @@ module Prover.ProofM
     , intros
     , exact
     , _goal
+    , _env
+    , _premises
     ) where
 
 import           Control.Lens                 (Lens', assign, at, use, uses,

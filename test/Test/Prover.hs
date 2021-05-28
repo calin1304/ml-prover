@@ -2,20 +2,23 @@ module Test.Prover
     ( tests
     ) where
 
-import           Control.Lens
+import           Control.Lens          (at, (^.))
 import           Data.Either           (isLeft)
 import qualified Data.Map.Strict       as M (fromList)
 import           Data.Maybe            (isJust)
-import           Test.Tasty
-import           Test.Tasty.HUnit
-import           Test.Tasty.QuickCheck
+import           Test.Tasty            (TestTree, testGroup)
+import           Test.Tasty.HUnit      (assertBool, assertEqual, assertFailure,
+                                        testCase, (@?=))
+import           Test.Tasty.QuickCheck ()
 
 import           Interp                (isTop)
-import           Language.Lexer
-import           Language.Parser
-import           Language.ParserM
-import           Language.Syntax
-import           Prover.ProofM
+import           Language.Lexer        ()
+import           Language.Parser       ()
+import           Language.ParserM      ()
+import           Language.Syntax       (Declaration (Rule), axiom, ( ## ))
+import           Prover.ProofM         (ProofState (ProofState), apply,
+                                        assumptions, env, exact, goal, premises,
+                                        runProofM, specialize, _env, _goal)
 
 tests :: TestTree
 tests = testGroup "Prover"
@@ -24,29 +27,6 @@ tests = testGroup "Prover"
     , applyTacticTests
     , proofTests
     ]
-
-test_prop_logic = undefined -- actual @?= expected
---   where
---     expected = True
---     actual = source >>= checkFile
-
---     source :: IO String
---     source = readFile "test/data/test_prop_logic.mlp"
-
---     checkFile :: FilePath -> IO (Either e ())
---     checkFile = parseFile >>= runInterpM
-
-{-
-specialize tests
-env: H1 : X, H2 : X -> Y
-goal: Y
-
-specialize (mp H1) as H3
-env: H1 : X, H2 : X -> Y, H3 : mp H1
-
-specialize (mp H1 H2) as H3
-env: H1 : X, H2 : X -> Y : H3 : Y
--}
 
 specializeTacticTests :: TestTree
 specializeTacticTests =
@@ -58,7 +38,7 @@ specializeTacticTests =
   where
     -- TODO: Test that it fails if rule to specialize is not in the context
     partialSpecialization = do
-        let Right (a, st) =
+        let Right (_, st) =
                 runProofM
                     (specialize ("mp" ## "X") "Hs")
                     (ProofState
@@ -81,7 +61,7 @@ specializeTacticTests =
         -- TODO: Add test that tries to specialize with something that has hypotheses
 
     totalSpecialization = do
-        let Right (a, st) =
+        let Right (_, st) =
                 runProofM
                     (specialize ("Hs" ## "Y") "Hss")
                     (ProofState
@@ -104,7 +84,7 @@ specializeTacticTests =
         c @?= "Y"
 
     applicatioSpecialization = do
-        let Right (a, st) =
+        let Right (_, st) =
                 runProofM
                     (specialize ("r" ## "H") "Hss")
                     (ProofState
@@ -131,7 +111,7 @@ exactTacticTests =
         ]
   where
     exactTest = do
-        let Right (a, st) =
+        let Right (_, st) =
                 runProofM
                     (exact "H")
                     (ProofState
@@ -161,7 +141,7 @@ applyTacticTests =
                     )
         case result of
             Left e -> assertFailure e
-            Right (a, st) -> assertBool "goal is satisfied" $ isTop $ st ^. _goal
+            Right (_, st) -> assertBool "goal is satisfied" $ isTop $ st ^. _goal
 
     noMatch = do
         let result =
@@ -194,7 +174,7 @@ proofTests =
                 --     ]
                 assumptions "H2" "H3"
                 exact "H3"
-        let Right (a, st) =
+        let Right (_, st) =
                 runProofM
                     proof
                     (ProofState
@@ -217,7 +197,7 @@ proofTests =
                     [ apply "X"  []
                     , apply "X0" []
                     ]
-        let Right (a, st) =
+        let Right (_, st) =
                 runProofM
                     proof
                     (ProofState
@@ -241,7 +221,7 @@ proofTests =
                         [ apply "X1" [] -- FIXME: This should fail but it doesn't
                         ]
                     ]
-        let Right (a, st) =
+        let Right (_, st) =
                 runProofM
                     proof
                     (ProofState
