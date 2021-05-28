@@ -1,29 +1,36 @@
-module Prover.ProofM where
+module Prover.ProofM
+    ( assumptions
+    , apply
+    , specialize
+    , runProofM
+    , step
+    , intros
+    , exact
+    , _goal
+    ) where
 
-import           Control.Arrow                ((&&&))
-import           Control.Lens
-import           Control.Monad.Except
-import           Control.Monad.State
+import           Control.Lens                 (Lens', assign, at, use, uses,
+                                               (%=), (.=))
+import           Control.Monad.Except         (Except, runExcept, throwError)
+import           Control.Monad.State          (StateT, get, runStateT)
 import           Data.Bool                    (bool)
 import           Data.Foldable                (traverse_)
-import           Data.Function                ((&))
-import           Data.Functor                 ((<&>))
 import           Data.Generics.Product.Fields (field)
-import           Data.List                    (intercalate)
-import           Data.Map                     (Map (..))
-import qualified Data.Map                     as M (insert, lookup, toList)
-import           Data.Maybe                   (fromMaybe)
+import           Data.Map                     (Map)
+import qualified Data.Map                     as M (insert, toList)
 import           GHC.Generics                 (Generic)
-import           Test.QuickCheck              (Arbitrary, arbitrary)
 import           Text.PrettyPrint             (($+$))
 import qualified Text.PrettyPrint             as PP
 import           Text.Printf                  (printf)
 
-import           Language.Syntax
-import           Pretty
-import           Prover.Substitution
-import           Prover.Types
-import           Utils
+import           Language.Syntax              (Declaration (Rule),
+                                               Expr (Application, Ident),
+                                               Tactic (Apply, Exact, Intros, Specialize),
+                                               getDefinition)
+import           Pretty                       (Pretty, pretty)
+import           Prover.Substitution          (applySubst, mkSubst)
+import           Prover.Types                 (Goal, Name, Premises)
+import           Utils                        (allA)
 
 type ProverError = String
 type ProofM = StateT ProofState (Except ProverError)
@@ -38,7 +45,7 @@ data ProofState = ProofState
     deriving (Eq, Generic, Show)
 
 instance Pretty ProofState where
-    pretty (ProofState goal premises env) =
+    pretty (ProofState { goal, env }) =
         PP.text "Env" $+$ PP.nest 4 docEnv $+$ PP.text "Goal" $+$ PP.nest 4 docGoal
       where
         docEnv = PP.vcat . map (PP.text . show . snd) $ M.toList env
@@ -66,7 +73,7 @@ step :: Tactic -> ProofM ()
 step = \case
     Intros asName -> intros asName
     Specialize expr asName -> specialize expr asName
-    -- Apply expr asName -> apply expr asName
+    Apply _ _ -> undefined
     Exact name -> exact name
 
 -------------
@@ -75,7 +82,7 @@ step = \case
 
 -- FIXME: Doesn't work with implication
 intros :: Name -> ProofM ()
-intros asName = undefined
+intros _ = undefined
     -- modify $ \st -> do
     --     let (pre, rest) = uncons (premises st) & fromMaybe (throwError "Trying to intros with no premises")
     --     st
@@ -121,10 +128,10 @@ specialize' expr =
 apply :: String -> [ProofM ()] -> ProofM ()
 apply sym subproofs = do
     r <- lookupSymbol sym
-    goal <- use _goal
+    g <- use _goal
     case r of
         Rule _ [] hs c ->
-            if c `matches` goal
+            if c `matches` g
                 then checkHypos (zip hs subproofs) >> setGoal "top" -- TODO: check we have as many proofs as hypotheses
                 else throwError "Goal doesn't match conclusion of applied formula"
         _             -> throwError "Can't apply"
@@ -139,6 +146,7 @@ apply sym subproofs = do
             Right _ -> pure ()
             Left e  -> throwError e
 
+matches :: Expr -> Expr -> Bool
 matches = (==)
 
 -- check goal with consequence => proove all hypotheses
@@ -152,10 +160,12 @@ assumptions name asName = do
         (addRule (withoutHypotheses r) asName)
   where
     withoutHypotheses :: Declaration -> Declaration
-    withoutHypotheses (Rule name args hs c) = Rule name args [] c
+    withoutHypotheses (Rule rname args _ c) = Rule rname args [] c
+    withoutHypotheses _                     = undefined
 
     hypothese :: Declaration -> [Expr]
     hypothese (Rule _ _ hs _) = hs
+    hypothese _               = undefined
 
     isInCtx :: Expr -> ProofM Bool
     isInCtx e = uses _env ((e `elem`) . fmap (snd . getDefinition))
@@ -183,10 +193,8 @@ exact' name =
 -------------
 
 addRule :: Declaration -> Name -> ProofM ()
-addRule (Rule name args hs c) asName = _env %= M.insert asName (Rule asName args hs c)
-
-addToEnv :: [Expr] -> Expr -> String -> ProofM ()
-addToEnv hs c asName = addRule (Rule asName [] hs c) asName
+addRule (Rule _ args hs c) asName = _env %= M.insert asName (Rule asName args hs c)
+addRule _ _ = undefined
 
 lookupSymbol :: Name -> ProofM Declaration
 lookupSymbol name = do

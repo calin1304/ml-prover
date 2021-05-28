@@ -1,4 +1,6 @@
 {
+{-# OPTIONS_GHC -w #-}
+
 module Language.Lexer (Lexeme (..), LexemeClass (..), scanner) where
 }
 

@@ -1,6 +1,13 @@
-module Print where
+module Print
+    ( top
+    , vdash
+    , lambda
+    , forall
+    , definition
+    , qed
+    ) where
 
-import           Text.PrettyPrint
+import           Text.PrettyPrint (Doc, char, text)
 
 top :: Doc
 top = char '⊤'

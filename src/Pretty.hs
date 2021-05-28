@@ -4,10 +4,14 @@ module Pretty
     , toString
     ) where
 
-import           Print
-import           Text.PrettyPrint
+import           Print            (definition, forall, qed, top, vdash)
+import           Text.PrettyPrint (Doc, brackets, colon, comma, doubleQuotes,
+                                   hcat, hsep, lbrace, nest, parens, punctuate,
+                                   rbrace, render, text, vcat, ($+$), (<+>))
 
-import           Language.Syntax
+import           Language.Syntax  (Declaration (Import, Lemma, MetaSym, Notation, Rule),
+                                   Expr (Application, Ident), ModDef (ModDef),
+                                   Tactic (Apply, Exact, Intros, Specialize))
 
 class Pretty a where
     pretty :: a -> Doc
@@ -35,7 +39,7 @@ instance Pretty Declaration where
             in if null args
                     then hsep [name', definition, hypotheses, vdash, conclusion]
                     else hsep [name', definition, forall, args', colon, hypotheses, vdash, conclusion]
-        Lemma name args hs c proof ->
+        Lemma name args _ _ proof ->
             let docProof = vcat $ map pretty proof
                 args' = hsep $ map text args
                 hypotheses = text "_"

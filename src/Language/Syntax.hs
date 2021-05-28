@@ -1,12 +1,19 @@
-module Language.Syntax where
+module Language.Syntax
+    ( Source (..)
+    , ModDef (..)
+    , Declaration (..)
+    , Expr (..)
+    , Tactic (..)
+    , SymAttr (..)
+    , Argument (..)
+    , Signature (..)
+    , getDefinition
+    , mkAttr
+    , (##)
+    , axiom
+    ) where
 
-import           Data.List       (intercalate)
-import           Data.String     (IsString, fromString)
-import           Test.QuickCheck
-import           Text.Printf     (printf)
-
-import           Language.Lexer
-import           Print
+import           Data.String (IsString, fromString)
 
 newtype Source = Source [ModDef]
     deriving (Show)
@@ -65,6 +72,8 @@ instance IsString Expr where
 
 -- I'm tired of writing long names
 infixl 5 ##
+
+(##) :: Expr -> Expr -> Expr
 (##) = Application
 
 data Signature =

@@ -1,17 +1,17 @@
-module Main where
+module Main
+    ( main
+    ) where
 
-import           Control.Monad.IO.Class (MonadIO)
-import           Control.Monad.State    (runState)
-import           Data.Foldable          (traverse_)
-import qualified Data.Map               as M (empty)
-import qualified System.Environment     as E (getArgs)
+import           Control.Monad.State (runState)
+import qualified Data.Map            as M (empty)
+import qualified System.Environment  as E (getArgs)
 
-import           Interp                 (Env, InterpError, interp, runInterpM)
-import           Language.Lexer
-import           Language.Parser
-import           Language.ParserM       (ParserState (..))
-import           Language.Syntax
-import           Utils                  (showSection)
+import           Interp              (Env, InterpError, interp, runInterpM)
+import           Language.Lexer      (scanner)
+import           Language.Parser     (parser)
+import           Language.ParserM    (ParserState (ParserState))
+import           Language.Syntax     (ModDef (ModDef), Source (Source))
+import           Utils               (showSection)
 
 main :: IO ()
 main = do
@@ -20,8 +20,8 @@ main = do
         Left e -> error e
         Right (Source mods) ->
             case mods of
-                []   -> error "No modules parsed"
-                mods -> showSection "result" $ map checkModule mods
+                [] -> error "No modules parsed"
+                ms -> showSection "result" $ map checkModule ms
                     -- let (a, st) = runInterpM (traverse interp decls) M.empty
                     -- showSection "Interp state" st
     -- getArgs >>= readFile . head >>= \s -> do
@@ -32,7 +32,7 @@ main = do
     --     showSection "Parser final state" (snd <$> parsed)
 
 checkModule :: ModDef -> (Either InterpError [()], Env)
-checkModule (ModDef name decls) = runInterpM (traverse interp decls) M.empty
+checkModule (ModDef _ decls) = runInterpM (traverse interp decls) M.empty
 
 parseFile :: FilePath -> IO (Either String Source)
 parseFile path = do

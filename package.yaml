@@ -26,6 +26,7 @@ default-extensions:
 - DeriveGeneric
 - DerivingStrategies
 - LambdaCase
+- NamedFieldPuns
 - OverloadedStrings
 - TypeApplications
 
@@ -47,6 +48,12 @@ build-tools:
 
 library:
   source-dirs: src
+
+ghc-options:
+- -Wall
+- -Werror
+- -Wmissing-export-lists
+- -Wmissing-import-lists
 
 executables:
   ml-parser-exe:

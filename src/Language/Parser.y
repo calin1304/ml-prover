@@ -1,4 +1,6 @@
 {
+{-# GHC_OPTIONS -w #-}
+
 module Language.Parser
     ( parser
     , parseModule

@@ -1,10 +1,13 @@
-module Prover.Substitution where
+module Prover.Substitution
+    ( mkSubst
+    , applySubst
+    ) where
 
 import           Data.Map.Strict (Map)
 import qualified Data.Map.Strict as M
 import           Data.Maybe      (fromMaybe)
 
-import           Language.Syntax
+import           Language.Syntax (Expr (Application, Ident))
 
 newtype Subst = Subst (Map String Expr)
                 deriving (Show)

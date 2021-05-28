@@ -1,6 +1,9 @@
-module Utils where
+module Utils
+    ( allA
+    , showSection
+    , debugSection
+    ) where
 
-import           Data.Maybe       (fromJust)
 import           System.IO.Unsafe (unsafePerformIO)
 import           Text.Printf      (printf)
 
