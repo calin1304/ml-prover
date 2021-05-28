@@ -10,6 +10,7 @@ import qualified Text.PrettyPrint    as PP
 
 import           Language.Lexer
 import           Language.Syntax
+import           Pretty
 import           Utils
 
 type ParserM a = State ParserState a
@@ -17,9 +18,12 @@ type ParserM a = State ParserState a
 newtype ParserState = ParserState
     { names :: [(String, Declaration)]
     }
+    deriving (Show)
 
-instance Show ParserState where
-    show = PP.render . docParserState
+instance Pretty ParserState where
+    pretty (ParserState names) = PP.braces $ PP.nest 4 docNames
+      where
+        docNames = PP.vcat $ map (PP.text . show . snd) names
 
 runParserM :: ([LexemeClass] -> ParserM a)-> [LexemeClass] -> a
 runParserM p ls = evalState (p ls) emptyState
@@ -51,11 +55,3 @@ checkDef :: Expr -> ParserM Bool
 checkDef (Application left right) = pure False -- andM [hasName left, allA checkDef right]
 checkDef (Ident name)             = hasName name
 
----------------------
--- Pretty printing --
----------------------
-
-docParserState :: ParserState -> PP.Doc
-docParserState (ParserState names) = PP.braces $ PP.nest 4 docNames
-  where
-    docNames = PP.vcat $ map (PP.text . show . snd) names

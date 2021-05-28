@@ -20,6 +20,7 @@ import qualified Text.PrettyPrint             as PP
 import           Text.Printf                  (printf)
 
 import           Language.Syntax
+import           Pretty
 import           Prover.Substitution
 import           Prover.Types
 import           Utils
@@ -34,7 +35,14 @@ data ProofState = ProofState
     , premises :: Premises
     , env      :: ProofEnv
     }
-    deriving (Eq, Generic)
+    deriving (Eq, Generic, Show)
+
+instance Pretty ProofState where
+    pretty (ProofState goal premises env) =
+        PP.text "Env" $+$ PP.nest 4 docEnv $+$ PP.text "Goal" $+$ PP.nest 4 docGoal
+      where
+        docEnv = PP.vcat . map (PP.text . show . snd) $ M.toList env
+        docGoal = pretty goal
 
 ------------
 -- Lenses --
@@ -50,9 +58,6 @@ _env :: Lens' ProofState ProofEnv
 _env = field @"env"
 
 ---
-
-instance Show ProofState where
-    show = PP.render . docProofState
 
 runProofM :: ProofM a -> ProofState -> Either ProverError (a, ProofState)
 runProofM m st = runExcept $ runStateT m st
@@ -156,6 +161,7 @@ assumptions name asName = do
     isInCtx e = uses _env ((e `elem`) . fmap (snd . getDefinition))
      -- ^ TODO: What to do with hypotheses from definition? Add test for that.
 
+-- This could be written as apply on a formula without hypotheses
 exact :: Name -> ProofM ()
 exact name =
     exact' name >>= \case
@@ -167,11 +173,9 @@ exact name =
                         . show
 
 exact' :: Name -> ProofM Bool
-exact' name = do
-    goal <- use _goal
-    r <- lookupSymbol name
-    case r of
-        Rule _ _ [] c -> pure $ goal == c
+exact' name =
+    lookupSymbol name >>= \case
+        Rule _ _ [] c -> uses _goal (== c)
         _             -> pure False
 
 -------------
@@ -191,13 +195,3 @@ lookupSymbol name = do
 
 setGoal :: Goal -> ProofM ()
 setGoal = assign _goal
-
----------------------
--- Pretty printing --
----------------------
-
-docProofState (ProofState goal premises env) =
-    PP.text "Env" $+$ PP.nest 4 docEnv $+$ PP.text "Goal" $+$ PP.nest 4 docGoal
-  where
-    docEnv = PP.vcat . map (PP.text . show . snd) $ M.toList env
-    docGoal = docExpr goal
