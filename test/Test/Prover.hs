@@ -17,7 +17,7 @@ import           Language.Parser       ()
 import           Language.ParserM      ()
 import           Language.Syntax       (Declaration (Rule), axiom, ( ## ))
 import           Prover.ProofM         (ProofState (ProofState), apply,
-                                        assumptions, env, exact, goal, premises,
+                                        assumptions, env, exact, goal,
                                         runProofM, specialize, _env, _goal)
 
 tests :: TestTree
@@ -43,7 +43,6 @@ specializeTacticTests =
                     (specialize ("mp" ## "X") "Hs")
                     (ProofState
                         { goal = "Y"
-                        , premises = []
                         , env =
                             M.fromList
                                 [ ("mp", Rule "mp" ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
@@ -66,7 +65,6 @@ specializeTacticTests =
                     (specialize ("Hs" ## "Y") "Hss")
                     (ProofState
                         { goal = "Y"
-                        , premises = []
                         , env =
                             M.fromList
                                 [ ("mp", Rule "mp" ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
@@ -89,7 +87,6 @@ specializeTacticTests =
                     (specialize ("r" ## "H") "Hss")
                     (ProofState
                         { goal = "Y"
-                        , premises = []
                         , env =
                             M.fromList
                                 [ ("r", Rule "r" ["P"] ["impl" ## "P" ## "P"] "P")
@@ -116,7 +113,6 @@ exactTacticTests =
                     (exact "H")
                     (ProofState
                         { goal = "Y"
-                        , premises = []
                         , env = M.fromList [("H", axiom "H" "Y")]
                         }
                     )
@@ -135,7 +131,6 @@ applyTacticTests =
                     (apply "H" [])
                     (ProofState
                         { goal = "P"
-                        , premises = []
                         , env = M.fromList [("H", Rule "H" [] [] "P")]
                         }
                     )
@@ -149,7 +144,6 @@ applyTacticTests =
                     (apply "H" [])
                     (ProofState
                         { goal = "P"
-                        , premises = []
                         , env = M.fromList [("H", Rule "H" [] [] "Q")]
                         }
                     )
@@ -179,7 +173,6 @@ proofTests =
                     proof
                     (ProofState
                         { goal = "Y"
-                        , premises = []
                         , env =
                             M.fromList
                                 [ ("mp", Rule "mp" ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
@@ -202,7 +195,6 @@ proofTests =
                     proof
                     (ProofState
                         { goal = "R"
-                        , premises = []
                         , env =
                             M.fromList
                                 [ ("X", axiom "X" "P")
@@ -226,7 +218,6 @@ proofTests =
                     proof
                     (ProofState
                         { goal = "R"
-                        , premises = []
                         , env =
                             M.fromList
                                 [ ("X", Rule "X" [] ["P"] "Q")
@@ -235,5 +226,4 @@ proofTests =
                                 ]
                         }
                     )
-        print st
         assertEqual "goal is top" "top" (st ^. _goal)

@@ -9,7 +9,6 @@ module Prover.ProofM
     , exact
     , _goal
     , _env
-    , _premises
     ) where
 
 import           Control.Lens                 (Lens', assign, at, use, uses,
@@ -32,7 +31,7 @@ import           Language.Syntax              (Declaration (Rule),
                                                getDefinition)
 import           Pretty                       (Pretty, pretty)
 import           Prover.Substitution          (applySubst, mkSubst)
-import           Prover.Types                 (Goal, Name, Premises)
+import           Prover.Types                 (Goal, Name)
 import           Utils                        (allA)
 
 type ProverError = String
@@ -41,9 +40,8 @@ type ProofM = StateT ProofState (Except ProverError)
 type ProofEnv = Map String Declaration
 
 data ProofState = ProofState
-    { goal     :: Goal
-    , premises :: Premises
-    , env      :: ProofEnv
+    { goal :: Goal
+    , env  :: ProofEnv
     }
     deriving (Eq, Generic, Show)
 
@@ -60,9 +58,6 @@ instance Pretty ProofState where
 
 _goal :: Lens' ProofState Goal
 _goal = field @"goal"
-
-_premises :: Lens' ProofState Premises
-_premises = field @"premises"
 
 _env :: Lens' ProofState ProofEnv
 _env = field @"env"
