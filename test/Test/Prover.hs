@@ -4,7 +4,7 @@ module Test.Prover
 
 import           Control.Lens          (at, (^.))
 import           Data.Either           (isLeft)
-import qualified Data.Map.Strict       as M (fromList)
+import qualified Data.Map.Strict       as M (singleton, fromList)
 import           Data.Maybe            (isJust)
 import           Test.Tasty            (TestTree, testGroup)
 import           Test.Tasty.HUnit      (assertBool, assertEqual, assertFailure,
@@ -16,6 +16,7 @@ import           Language.Lexer        ()
 import           Language.Parser       ()
 import           Language.ParserM      ()
 import           Language.Syntax       (Declaration (Rule), axiom, ( ## ))
+import Prover.Types (Goal)
 import           Prover.ProofM         (ProofState (ProofState), apply,
                                         assumptions, env, exact, goal,
                                         runProofM, specialize, _env, _goal)
@@ -108,14 +109,7 @@ exactTacticTests =
         ]
   where
     exactTest = do
-        let Right (_, st) =
-                runProofM
-                    (exact "H")
-                    (ProofState
-                        { goal = "Y"
-                        , env = M.fromList [("H", axiom "H" "Y")]
-                        }
-                    )
+        let Right (_, st) = runProofM (exact "H") (singleRule "Y" "H" (axiom "H" "Y"))
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
 
 applyTacticTests :: TestTree
@@ -126,27 +120,13 @@ applyTacticTests =
         ]
   where
     noHypotheses = do
-        let result =
-                runProofM
-                    (apply "H" [])
-                    (ProofState
-                        { goal = "P"
-                        , env = M.fromList [("H", Rule "H" [] [] "P")]
-                        }
-                    )
+        let result = runProofM (apply "H" []) (singleRule "P" "H" (Rule "H" [] [] "P"))
         case result of
             Left e -> assertFailure e
             Right (_, st) -> assertBool "goal is satisfied" $ isTop $ st ^. _goal
 
     noMatch = do
-        let result =
-                runProofM
-                    (apply "H" [])
-                    (ProofState
-                        { goal = "P"
-                        , env = M.fromList [("H", Rule "H" [] [] "Q")]
-                        }
-                    )
+        let result = runProofM (apply "H" []) (singleRule "P" "H" (Rule "H" [] [] "Q"))
         assertBool "fail because goal doesn't match conclusion of applied formula"
             $ isLeft result
 
@@ -227,3 +207,14 @@ proofTests =
                         }
                     )
         assertEqual "goal is top" "top" (st ^. _goal)
+
+-----------
+-- Utils --
+-----------
+
+singleRule :: Goal -> String -> Declaration -> ProofState
+singleRule g k v =
+    ProofState
+        { goal = g
+        , env = M.singleton k v
+        }
