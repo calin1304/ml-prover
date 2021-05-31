@@ -120,7 +120,7 @@ applyTacticTests =
     noHypotheses = do
         let result = runProofM (apply "H" []) (singleRule "P" "H" (Rule [] []  "P"))
         case result of
-            Left e -> assertFailure e
+            Left e -> assertFailure $ show e
             Right (_, st) -> assertBool "goal is satisfied" $ isTop $ st ^. _goal
     noMatch = do
         let result = runProofM (apply "H" []) (singleRule "P" "H" (Rule [] [] "Q"))
@@ -132,7 +132,7 @@ applyTacticTests =
                     (apply "H" [])
                     (singleRule ("impl" ## "P" ## "Q") "H" (Rule [] [] ("impl" ## "P" ## ("impl" ## "P" ## "Q"))))
         case result of
-            Left e -> assertFailure ("failed with error: " ++ e)
+            Left e -> assertFailure $ show e
             Right _ -> undefined
 
 proofTests :: TestTree

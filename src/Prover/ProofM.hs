@@ -34,10 +34,16 @@ import           Prover.Substitution          (applySubst, mkSubst)
 import           Prover.Types                 (Goal, Name)
 import           Utils                        (allA)
 
-type ProverError = String
+
 type ProofM = StateT ProofState (Except ProverError)
 
 type ProofEnv = Map String Declaration
+
+data ProverError =
+    TacticError String
+  | SymbolNotFound String
+  | SymbolNotARule String
+    deriving (Show)
 
 data ProofState = ProofState
     { goal :: Goal
@@ -112,14 +118,14 @@ specialize' expr =
             case r of
                 Rule args hs c ->
                     case args of
-                        [] -> throwError "Not enough arguments to specialize"
+                        [] -> throwError (TacticError "Not enough arguments to specialize")
                         (x:xs) -> do
                             let subst = mkSubst [(x, e2)]
                             let hs' = map (applySubst subst) hs
                             let c' = applySubst subst c
                             pure $ Rule xs hs' c'
-                _ -> throwError "Symbol not a rule"
-        _ -> throwError "Invalid specialize argument"
+                _ -> throwError (SymbolNotARule i)
+        _ -> throwError (TacticError "Invalid specialize argument")
 
 -- | @apply name subproofs@ tries to match @name@ with the current goal, and if that's the
 -- case, then checks @subproofs@ which coressponds to proofs for all the hypotheses.
@@ -131,8 +137,8 @@ apply sym subproofs = do
         Rule [] hs c ->
             if c `matches` g
                 then checkHypos (zip hs subproofs) >> setGoal "top" -- TODO: check we have as many proofs as hypotheses
-                else throwError "Goal doesn't match conclusion of applied formula"
-        _             -> throwError "Can't apply"
+                else throwError (TacticError "Goal doesn't match conclusion of applied formula")
+        _             -> throwError (TacticError "Can't apply")
   where
     checkHypos :: [(Expr, ProofM ())] -> ProofM ()
     checkHypos = traverse_ (uncurry checkNew)
@@ -154,7 +160,7 @@ assumptions :: Name -> Name -> ProofM ()
 assumptions name asName = do
     r <- lookupSymbol name
     allA isInCtx (hypothese r) >>= bool
-        (throwError "Could not satisfy all hypos")
+        (throwError $ TacticError "Could not satisfy all hypos")
         (addRule (withoutHypotheses r) asName)
   where
     withoutHypotheses :: Declaration -> Declaration
@@ -174,11 +180,9 @@ exact :: Name -> ProofM ()
 exact name =
     exact' name >>= \case
         True -> _goal .= Ident "top"
-        False -> do
-            get
-                >>= throwError
-                        . printf "exact: Could not match formula %s with goal\nProof state:\n%s" name
-                        . show
+        False ->
+            throwError
+                $ TacticError $ printf "exact: Could not match formula %s with goal" name
 
 exact' :: Name -> ProofM Bool
 exact' name =
@@ -195,9 +199,7 @@ addRule (Rule args hs c) asName = _env %= M.insert asName (Rule args hs c)
 addRule _ _ = undefined
 
 lookupSymbol :: Name -> ProofM Declaration
-lookupSymbol name = do
-    use (_env . at name)
-        >>= maybe (throwError $ printf "Symbol %s not found\n." name) pure
+lookupSymbol name = use (_env . at name) >>= maybe (throwError $ SymbolNotFound name) pure
 
 setGoal :: Goal -> ProofM ()
 setGoal = assign _goal
