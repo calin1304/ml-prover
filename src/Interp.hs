@@ -24,7 +24,7 @@ runInterpM = runState . runExceptT
 interp :: Declaration -> InterpM ()
 interp decl =
     case decl of
-        Rule name _ _ _ -> addDeclaration name decl
+        Rule _ _ _ -> undefined -- addDeclaration name decl
         Lemma _ _ _ _ _ -> undefined -- do
             -- env <- get
             -- let

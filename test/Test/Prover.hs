@@ -15,7 +15,7 @@ import           Interp                (isTop)
 import           Language.Lexer        ()
 import           Language.Parser       ()
 import           Language.ParserM      ()
-import           Language.Syntax       (Declaration (Rule), axiom, ( ## ))
+import           Language.Syntax       (Declaration (Rule), ( ## ))
 import Prover.Types (Goal)
 import           Prover.ProofM         (ProofState (ProofState), apply,
                                         assumptions, env, exact, goal,
@@ -46,14 +46,13 @@ specializeTacticTests =
                         { goal = "Y"
                         , env =
                             M.fromList
-                                [ ("mp", Rule "mp" ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
-                                , ("X", axiom "X" "X")
+                                [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                                , ("X", Rule [] [] "X")
                                 ]
                         }
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hs"
-        let Just (Rule name args hs c) = st ^. _env . at "Hs"
-        name @?= "Hs"
+        let Just (Rule args hs c) = st ^. _env . at "Hs"
         args @?= ["Q"]
         hs @?= ["X", "impl" ## "X" ## "Q"]
         c @?= "Q"
@@ -68,16 +67,15 @@ specializeTacticTests =
                         { goal = "Y"
                         , env =
                             M.fromList
-                                [ ("mp", Rule "mp" ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
-                                , ("X", axiom "X" "X")
-                                , ("Y", axiom "Y" "Y")
-                                , ("Hs", Rule "Hs" ["Q"] ["X", "impl" ## "X" ## "Q"] "Q")
+                                [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                                , ("X", Rule [] [] "X")
+                                , ("Y", Rule [] [] "Y")
+                                , ("Hs", Rule ["Q"] ["X", "impl" ## "X" ## "Q"] "Q")
                                 ]
                         }
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hss"
-        let Just (Rule name args hs c) = st ^. _env . at "Hss"
-        name @?= "Hss"
+        let Just (Rule args hs c) = st ^. _env . at "Hss"
         args @?= []
         hs @?= ["X", "impl" ## "X" ## "Y"]
         c @?= "Y"
@@ -90,14 +88,13 @@ specializeTacticTests =
                         { goal = "Y"
                         , env =
                             M.fromList
-                                [ ("r", Rule "r" ["P"] ["impl" ## "P" ## "P"] "P")
-                                , ("H", axiom "H" ("impl" ## "X" ## "Y"))
+                                [ ("r", Rule ["P"] ["impl" ## "P" ## "P"] "P")
+                                , ("H", Rule [] [] ("impl" ## "X" ## "Y"))
                                 ]
                         }
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hss"
-        let Just (Rule name args hs c) = st ^. _env . at "Hss"
-        name @?= "Hss"
+        let Just (Rule args hs c) = st ^. _env . at "Hss"
         args @?= []
         hs @?= ["impl" ## ("impl" ## "X" ## "Y") ## ("impl" ## "X" ## "Y")]
         c @?= "impl" ## "X" ## "Y"
@@ -109,7 +106,7 @@ exactTacticTests =
         ]
   where
     exactTest = do
-        let Right (_, st) = runProofM (exact "H") (singleRule "Y" "H" (axiom "H" "Y"))
+        let Right (_, st) = runProofM (exact "H") (singleRule "Y" "H" (Rule [] [] "Y"))
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
 
 applyTacticTests :: TestTree
@@ -117,18 +114,26 @@ applyTacticTests =
     testGroup "apply tactic"
         [ testCase "works as exact if there are no hypotheses" noHypotheses
         , testCase "fails if goal doesn't match conclusion" noMatch
+        , testCase "application goal is matched" applicationGoal
         ]
   where
     noHypotheses = do
-        let result = runProofM (apply "H" []) (singleRule "P" "H" (Rule "H" [] [] "P"))
+        let result = runProofM (apply "H" []) (singleRule "P" "H" (Rule [] []  "P"))
         case result of
             Left e -> assertFailure e
             Right (_, st) -> assertBool "goal is satisfied" $ isTop $ st ^. _goal
-
     noMatch = do
-        let result = runProofM (apply "H" []) (singleRule "P" "H" (Rule "H" [] [] "Q"))
+        let result = runProofM (apply "H" []) (singleRule "P" "H" (Rule [] [] "Q"))
         assertBool "fail because goal doesn't match conclusion of applied formula"
             $ isLeft result
+    applicationGoal = do
+        let result =
+                runProofM
+                    (apply "H" [])
+                    (singleRule ("impl" ## "P" ## "Q") "H" (Rule [] [] ("impl" ## "P" ## ("impl" ## "P" ## "Q"))))
+        case result of
+            Left e -> assertFailure ("failed with error: " ++ e)
+            Right _ -> undefined
 
 proofTests :: TestTree
 proofTests =
@@ -155,10 +160,10 @@ proofTests =
                         { goal = "Y"
                         , env =
                             M.fromList
-                                [ ("mp", Rule "mp" ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
-                                , ("X", axiom "X" "X")
-                                , ("Y", axiom "Y" "Y")
-                                , ("H", axiom "H" ("impl" ## "X" ## "Y"))
+                                [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                                , ("X", Rule [] [] "X")
+                                , ("Y", Rule [] [] "Y")
+                                , ("H", Rule [] [] ("impl" ## "X" ## "Y"))
                                 ]
                         }
                     )
@@ -177,9 +182,9 @@ proofTests =
                         { goal = "R"
                         , env =
                             M.fromList
-                                [ ("X", axiom "X" "P")
-                                , ("X0", axiom "X0" "Q")
-                                , ("X1", Rule "X1" [] ["P", "Q"] "R")
+                                [ ("X", Rule [] [] "P")
+                                , ("X0", Rule [] [] "Q")
+                                , ("X1", Rule [] ["P", "Q"] "R")
                                 ]
                         }
                     )
@@ -200,9 +205,9 @@ proofTests =
                         { goal = "R"
                         , env =
                             M.fromList
-                                [ ("X", Rule "X" [] ["P"] "Q")
-                                , ("X0", Rule "X0" [] ["P", "Q"] "R")
-                                , ("X1", Rule "X1" [] [] "P")
+                                [ ("X", Rule [] ["P"] "Q")
+                                , ("X0", Rule [] ["P", "Q"] "R")
+                                , ("X1", Rule [] [] "P")
                                 ]
                         }
                     )

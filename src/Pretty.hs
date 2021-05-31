@@ -31,14 +31,13 @@ instance Pretty Declaration where
         MetaSym name _ -> text name
         Notation name _ def _ -> docDef name def
         Import name -> text name
-        Rule name args hs c ->
-            let name' = text name
-                args' = text $ unwords args
+        Rule args hs c ->
+            let args' = text $ unwords args
                 hypotheses = pretty hs
                 conclusion = pretty c
             in if null args
-                    then hsep [name', definition, hypotheses, vdash, conclusion]
-                    else hsep [name', definition, forall, args', colon, hypotheses, vdash, conclusion]
+                    then hsep [definition, hypotheses, vdash, conclusion]
+                    else hsep [definition, forall, args', colon, hypotheses, vdash, conclusion]
         Lemma name args _ _ proof ->
             let docProof = vcat $ map pretty proof
                 args' = hsep $ map text args

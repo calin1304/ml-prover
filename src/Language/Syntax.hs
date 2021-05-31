@@ -10,7 +10,6 @@ module Language.Syntax
     , getDefinition
     , mkAttr
     , (##)
-    , axiom
     ) where
 
 import           Data.String (IsString, fromString)
@@ -33,7 +32,6 @@ data Declaration =
   | Import
         String -- ^ Import name
   | Rule
-        String   -- ^ Rule name
         [String] -- ^ Argument names
         [Expr]   -- ^ Hypotheses
         Expr     -- ^ Conclusion
@@ -45,14 +43,11 @@ data Declaration =
         [Tactic] -- ^ Proof
     deriving (Eq, Show)
 
-axiom :: String -> Expr -> Declaration
-axiom name = Rule name [] []
-
 class HasDefinition a where
     getDefinition :: a -> ([Expr], Expr)
 
 instance HasDefinition Declaration where
-    getDefinition (Rule _ _ hs e) = (hs, e)
+    getDefinition (Rule _ hs e) = (hs, e)
     getDefinition _               = undefined
 
 data Tactic =

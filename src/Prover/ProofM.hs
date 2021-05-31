@@ -110,14 +110,14 @@ specialize' expr =
             r <- lookupSymbol i
             e2 <- snd . getDefinition <$> lookupSymbol j -- TODO: Check that there are no hypotheses
             case r of
-                Rule name args hs c ->
+                Rule args hs c ->
                     case args of
                         [] -> throwError "Not enough arguments to specialize"
                         (x:xs) -> do
                             let subst = mkSubst [(x, e2)]
                             let hs' = map (applySubst subst) hs
                             let c' = applySubst subst c
-                            pure $ Rule name xs hs' c'
+                            pure $ Rule xs hs' c'
                 _ -> throwError "Symbol not a rule"
         _ -> throwError "Invalid specialize argument"
 
@@ -128,7 +128,7 @@ apply sym subproofs = do
     r <- lookupSymbol sym
     g <- use _goal
     case r of
-        Rule _ [] hs c ->
+        Rule [] hs c ->
             if c `matches` g
                 then checkHypos (zip hs subproofs) >> setGoal "top" -- TODO: check we have as many proofs as hypotheses
                 else throwError "Goal doesn't match conclusion of applied formula"
@@ -158,11 +158,11 @@ assumptions name asName = do
         (addRule (withoutHypotheses r) asName)
   where
     withoutHypotheses :: Declaration -> Declaration
-    withoutHypotheses (Rule rname args _ c) = Rule rname args [] c
+    withoutHypotheses (Rule args _ c) = Rule args [] c
     withoutHypotheses _                     = undefined
 
     hypothese :: Declaration -> [Expr]
-    hypothese (Rule _ _ hs _) = hs
+    hypothese (Rule _ hs _) = hs
     hypothese _               = undefined
 
     isInCtx :: Expr -> ProofM Bool
@@ -183,7 +183,7 @@ exact name =
 exact' :: Name -> ProofM Bool
 exact' name =
     lookupSymbol name >>= \case
-        Rule _ _ [] c -> uses _goal (== c)
+        Rule _ [] c -> uses _goal (== c)
         _             -> pure False
 
 -------------
@@ -191,7 +191,7 @@ exact' name =
 -------------
 
 addRule :: Declaration -> Name -> ProofM ()
-addRule (Rule _ args hs c) asName = _env %= M.insert asName (Rule asName args hs c)
+addRule (Rule args hs c) asName = _env %= M.insert asName (Rule args hs c)
 addRule _ _ = undefined
 
 lookupSymbol :: Name -> ProofM Declaration
