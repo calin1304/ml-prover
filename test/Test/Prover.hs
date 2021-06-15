@@ -4,7 +4,7 @@ module Test.Prover
 
 import           Control.Lens          (at, (^.))
 import           Data.Either           (isLeft)
-import qualified Data.Map.Strict       as M (singleton, fromList)
+import qualified Data.Map.Strict       as M (fromList, singleton)
 import           Data.Maybe            (isJust)
 import           Test.Tasty            (TestTree, testGroup)
 import           Test.Tasty.HUnit      (assertBool, assertEqual, assertFailure,
@@ -16,10 +16,11 @@ import           Language.Lexer        ()
 import           Language.Parser       ()
 import           Language.ParserM      ()
 import           Language.Syntax       (Declaration (Rule), ( ## ))
-import Prover.Types (Goal)
-import           Prover.ProofM         (ProofState (ProofState), apply,
-                                        assumptions, env, exact, goal,
-                                        runProofM, specialize, _env, _goal)
+import           Prover.ProofM         (ProofState, apply, assumptions,
+                                        emptyProofState, exact, mkProofState,
+                                        newName, runProofM, specialize, _env,
+                                        _goal)
+import           Prover.Types          (Goal)
 
 tests :: TestTree
 tests = testGroup "Prover"
@@ -27,6 +28,7 @@ tests = testGroup "Prover"
     , exactTacticTests
     , applyTacticTests
     , proofTests
+    , newNameTests
     ]
 
 specializeTacticTests :: TestTree
@@ -42,14 +44,11 @@ specializeTacticTests =
         let Right (_, st) =
                 runProofM
                     (specialize ("mp" ## "X") "Hs")
-                    (ProofState
-                        { goal = "Y"
-                        , env =
-                            M.fromList
-                                [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
-                                , ("X", Rule [] [] "X")
-                                ]
-                        }
+                    (mkProofState "Y"
+                        $ M.fromList
+                            [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                            , ("X", Rule [] [] "X")
+                            ]
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hs"
         let Just (Rule args hs c) = st ^. _env . at "Hs"
@@ -63,16 +62,13 @@ specializeTacticTests =
         let Right (_, st) =
                 runProofM
                     (specialize ("Hs" ## "Y") "Hss")
-                    (ProofState
-                        { goal = "Y"
-                        , env =
-                            M.fromList
-                                [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
-                                , ("X", Rule [] [] "X")
-                                , ("Y", Rule [] [] "Y")
-                                , ("Hs", Rule ["Q"] ["X", "impl" ## "X" ## "Q"] "Q")
-                                ]
-                        }
+                    (mkProofState "Y"
+                        $ M.fromList
+                            [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                            , ("X", Rule [] [] "X")
+                            , ("Y", Rule [] [] "Y")
+                            , ("Hs", Rule ["Q"] ["X", "impl" ## "X" ## "Q"] "Q")
+                            ]
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hss"
         let Just (Rule args hs c) = st ^. _env . at "Hss"
@@ -84,14 +80,11 @@ specializeTacticTests =
         let Right (_, st) =
                 runProofM
                     (specialize ("r" ## "H") "Hss")
-                    (ProofState
-                        { goal = "Y"
-                        , env =
-                            M.fromList
-                                [ ("r", Rule ["P"] ["impl" ## "P" ## "P"] "P")
-                                , ("H", Rule [] [] ("impl" ## "X" ## "Y"))
-                                ]
-                        }
+                    (mkProofState "Y"
+                        $ M.fromList
+                            [ ("r", Rule ["P"] ["impl" ## "P" ## "P"] "P")
+                            , ("H", Rule [] [] ("impl" ## "X" ## "Y"))
+                            ]
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hss"
         let Just (Rule args hs c) = st ^. _env . at "Hss"
@@ -132,7 +125,7 @@ applyTacticTests =
                     (apply "H" [])
                     (singleRule ("impl" ## "P" ## "Q") "H" (Rule [] [] ("impl" ## "P" ## ("impl" ## "P" ## "Q"))))
         case result of
-            Left e -> assertFailure $ show e
+            Left e  -> assertFailure $ show e
             Right _ -> undefined
 
 proofTests :: TestTree
@@ -156,16 +149,13 @@ proofTests =
         let Right (_, st) =
                 runProofM
                     proof
-                    (ProofState
-                        { goal = "Y"
-                        , env =
-                            M.fromList
-                                [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
-                                , ("X", Rule [] [] "X")
-                                , ("Y", Rule [] [] "Y")
-                                , ("H", Rule [] [] ("impl" ## "X" ## "Y"))
-                                ]
-                        }
+                    (mkProofState "Y"
+                        $ M.fromList
+                            [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                            , ("X", Rule [] [] "X")
+                            , ("Y", Rule [] [] "Y")
+                            , ("H", Rule [] [] ("impl" ## "X" ## "Y"))
+                            ]
                     )
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
 
@@ -178,15 +168,12 @@ proofTests =
         let Right (_, st) =
                 runProofM
                     proof
-                    (ProofState
-                        { goal = "R"
-                        , env =
-                            M.fromList
-                                [ ("X", Rule [] [] "P")
-                                , ("X0", Rule [] [] "Q")
-                                , ("X1", Rule [] ["P", "Q"] "R")
-                                ]
-                        }
+                    (mkProofState "R"
+                        $ M.fromList
+                            [ ("X", Rule [] [] "P")
+                            , ("X0", Rule [] [] "Q")
+                            , ("X1", Rule [] ["P", "Q"] "R")
+                            ]
                     )
         assertEqual "goal is top" "top" (st ^. _goal)
 
@@ -201,25 +188,29 @@ proofTests =
         let Right (_, st) =
                 runProofM
                     proof
-                    (ProofState
-                        { goal = "R"
-                        , env =
-                            M.fromList
-                                [ ("X", Rule [] ["P"] "Q")
-                                , ("X0", Rule [] ["P", "Q"] "R")
-                                , ("X1", Rule [] [] "P")
-                                ]
-                        }
+                    (mkProofState "R"
+                        $ M.fromList
+                            [ ("X", Rule [] ["P"] "Q")
+                            , ("X0", Rule [] ["P", "Q"] "R")
+                            , ("X1", Rule [] [] "P")
+                            ]
                     )
         assertEqual "goal is top" "top" (st ^. _goal)
+
+newNameTests :: TestTree
+newNameTests = testGroup "generating new names"
+    [ testCase "without prefix" noPrefixTest
+    , testCase "with prefix" prefixTest
+    ]
+  where
+    noPrefixTest = run Nothing @?= Right "_1"
+    prefixTest = run (Just "H") @?= Right "_H1"
+
+    run mprefix = fst <$> runProofM (newName Nothing >> newName mprefix) emptyProofState
 
 -----------
 -- Utils --
 -----------
 
 singleRule :: Goal -> String -> Declaration -> ProofState
-singleRule g k v =
-    ProofState
-        { goal = g
-        , env = M.singleton k v
-        }
+singleRule g k v = mkProofState g $ M.singleton k v

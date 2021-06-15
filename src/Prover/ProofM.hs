@@ -1,5 +1,7 @@
 module Prover.ProofM
     ( ProofState (..)
+    , mkProofState
+    , emptyProofState
     , assumptions
     , apply
     , specialize
@@ -9,10 +11,11 @@ module Prover.ProofM
     , exact
     , _goal
     , _env
+    , newName
     ) where
 
-import           Control.Lens                 (Lens', assign, at, use, uses,
-                                               (%=), (.=))
+import           Control.Lens                 (Lens', assign, at, modifying,
+                                               use, uses, (%=), (.=))
 import           Control.Monad.Except         (Except, runExcept, throwError)
 import           Control.Monad.State          (StateT, get, runStateT)
 import           Data.Bool                    (bool)
@@ -20,6 +23,7 @@ import           Data.Foldable                (traverse_)
 import           Data.Generics.Product.Fields (field)
 import           Data.Map                     (Map)
 import qualified Data.Map                     as M (insert, toList)
+import           Data.Maybe                   (fromMaybe)
 import           GHC.Generics                 (Generic)
 import           Text.PrettyPrint             (($+$))
 import qualified Text.PrettyPrint             as PP
@@ -43,13 +47,24 @@ data ProverError =
     TacticError String
   | SymbolNotFound String
   | SymbolNotARule String
-    deriving (Show)
+    deriving (Eq, Show)
 
 data ProofState = ProofState
-    { goal :: Goal
-    , env  :: ProofEnv
+    { goal    :: Goal
+    , env     :: ProofEnv
+    , counter :: Int
     }
     deriving (Eq, Generic, Show)
+
+mkProofState :: Goal -> ProofEnv -> ProofState
+mkProofState goal env = ProofState
+    { goal = goal
+    , env = env
+    , counter = 0
+    }
+
+emptyProofState :: ProofState
+emptyProofState = ProofState (Ident "bottom") mempty 0
 
 instance Pretty ProofState where
     pretty (ProofState { goal, env }) =
@@ -67,6 +82,9 @@ _goal = field @"goal"
 
 _env :: Lens' ProofState ProofEnv
 _env = field @"env"
+
+_counter :: Lens' ProofState Int
+_counter = field @"counter"
 
 ---
 
@@ -165,11 +183,11 @@ assumptions name asName = do
   where
     withoutHypotheses :: Declaration -> Declaration
     withoutHypotheses (Rule args _ c) = Rule args [] c
-    withoutHypotheses _                     = undefined
+    withoutHypotheses _               = undefined
 
     hypothese :: Declaration -> [Expr]
     hypothese (Rule _ hs _) = hs
-    hypothese _               = undefined
+    hypothese _             = undefined
 
     isInCtx :: Expr -> ProofM Bool
     isInCtx e = uses _env ((e `elem`) . fmap (snd . getDefinition))
@@ -196,10 +214,17 @@ exact' name =
 
 addRule :: Declaration -> Name -> ProofM ()
 addRule (Rule args hs c) asName = _env %= M.insert asName (Rule args hs c)
-addRule _ _ = undefined
+addRule _ _                     = undefined
 
 lookupSymbol :: Name -> ProofM Declaration
 lookupSymbol name = use (_env . at name) >>= maybe (throwError $ SymbolNotFound name) pure
 
 setGoal :: Goal -> ProofM ()
 setGoal = assign _goal
+
+-- | @newName mx@ generates a new name with possible prefix @mx@
+newName :: Maybe Name -> ProofM Name
+newName mprefix = (\i -> mconcat ["_", fromMaybe "" mprefix, show i]) <$> getNextCounter
+
+getNextCounter :: ProofM Int
+getNextCounter = use _counter <* modifying _counter (+1)
