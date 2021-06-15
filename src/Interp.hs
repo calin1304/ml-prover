@@ -7,9 +7,8 @@ module Interp
     ) where
 
 import           Control.Monad.Except (ExceptT, runExceptT, throwError)
-import           Control.Monad.State  (State, modify, runState)
+import           Control.Monad.State  (State, runState)
 import           Data.Map             (Map)
-import qualified Data.Map.Strict      as M (insert)
 
 import           Language.Syntax      (Declaration (Lemma, Rule), Expr (Ident))
 
@@ -36,9 +35,6 @@ interp decl =
             -- seq (debugSection "Proof state" proofState')
             --     $ unless (isTop $ proofState' ^. _goal) (throwError "Could not prove top")
         _               -> throwError "Invalid declaration"
-
-addDeclaration :: String -> Declaration -> InterpM ()
-addDeclaration name decl = modify (M.insert name decl)
 
 isTop :: Expr -> Bool
 isTop (Ident "top") = True
