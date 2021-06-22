@@ -15,7 +15,7 @@ import           Interp                (isTop)
 import           Language.Lexer        ()
 import           Language.Parser       ()
 import           Language.ParserM      ()
-import           Language.Syntax       (Declaration (Rule), ( ## ))
+import           Language.Syntax       (Declaration (Rule), ( ## ), Expr)
 import           Prover.ProofM         (ProofState, emptyProofState,
                                         mkProofState, newName, runProofM,
                                         _context, _goal)
@@ -46,14 +46,14 @@ specializeTacticTests =
                     (specialize ("mp" ## "X") "Hs")
                     (mkProofState "Y"
                         $ M.fromList
-                            [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                            [ ("mp", Rule ["P", "Q"] ["P", "P" .-> "Q"] "Q")
                             , ("X", Rule [] [] "X")
                             ]
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hs"
         let Just (Rule args hs c) = st ^. _context . at "Hs"
         args @?= ["Q"]
-        hs @?= ["X", "impl" ## "X" ## "Q"]
+        hs @?= ["X", "X" .-> "Q"]
         c @?= "Q"
 
         -- TODO: Add test that tries to specialize with something that has hypotheses
@@ -64,16 +64,16 @@ specializeTacticTests =
                     (specialize ("Hs" ## "Y") "Hss")
                     (mkProofState "Y"
                         $ M.fromList
-                            [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                            [ ("mp", Rule ["P", "Q"] ["P", "P" .-> "Q"] "Q")
                             , ("X", Rule [] [] "X")
                             , ("Y", Rule [] [] "Y")
-                            , ("Hs", Rule ["Q"] ["X", "impl" ## "X" ## "Q"] "Q")
+                            , ("Hs", Rule ["Q"] ["X", "X" .-> "Q"] "Q")
                             ]
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hss"
         let Just (Rule args hs c) = st ^. _context . at "Hss"
         args @?= []
-        hs @?= ["X", "impl" ## "X" ## "Y"]
+        hs @?= ["X","X" .-> "Y"]
         c @?= "Y"
 
     applicatioSpecialization = do
@@ -82,15 +82,15 @@ specializeTacticTests =
                     (specialize ("r" ## "H") "Hss")
                     (mkProofState "Y"
                         $ M.fromList
-                            [ ("r", Rule ["P"] ["impl" ## "P" ## "P"] "P")
-                            , ("H", Rule [] [] ("impl" ## "X" ## "Y"))
+                            [ ("r", Rule ["P"] ["P" .-> "P"] "P")
+                            , ("H", Rule [] [] ("X" .-> "Y"))
                             ]
                     )
         assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hss"
         let Just (Rule args hs c) = st ^. _context . at "Hss"
         args @?= []
-        hs @?= ["impl" ## ("impl" ## "X" ## "Y") ## ("impl" ## "X" ## "Y")]
-        c @?= "impl" ## "X" ## "Y"
+        hs @?= [("X" .-> "Y") .-> ("X" .-> "Y")]
+        c @?= "X" .->"Y"
 
 exactTacticTests :: TestTree
 exactTacticTests =
@@ -123,7 +123,7 @@ applyTacticTests =
         let result =
                 runProofM
                     (apply "H" [])
-                    (singleRule ("impl" ## "P" ## "Q") "H" (Rule [] [] ("impl" ## "P" ## ("impl" ## "P" ## "Q"))))
+                    (singleRule ("P" .-> "Q") "H" (Rule [] [] ("P" .-> ("P" .-> "Q"))))
         case result of
             Left e  -> assertFailure $ show e
             Right _ -> undefined
@@ -151,10 +151,10 @@ proofTests =
                     proof
                     (mkProofState "Y"
                         $ M.fromList
-                            [ ("mp", Rule ["P", "Q"] ["P", "impl" ## "P" ## "Q"] "Q")
+                            [ ("mp", Rule ["P", "Q"] ["P", "P" .-> "Q"] "Q")
                             , ("X", Rule [] [] "X")
                             , ("Y", Rule [] [] "Y")
-                            , ("H", Rule [] [] ("impl" ## "X" ## "Y"))
+                            , ("H", Rule [] [] ("X" .-> "Y"))
                             ]
                     )
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
@@ -214,3 +214,8 @@ newNameTests = testGroup "generating new names"
 
 singleRule :: Goal -> String -> Declaration -> ProofState
 singleRule g k v = mkProofState g $ M.singleton k v
+
+infix 5 .->
+
+(.->) :: Expr -> Expr -> Expr
+(.->) p q = "impl" ## p ## q
