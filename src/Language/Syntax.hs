@@ -48,7 +48,7 @@ class HasDefinition a where
 
 instance HasDefinition Declaration where
     getDefinition (Rule _ hs e) = (hs, e)
-    getDefinition _               = undefined
+    getDefinition _             = undefined
 
 data Tactic =
     Intros String

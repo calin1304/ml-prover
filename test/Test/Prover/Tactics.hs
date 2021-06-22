@@ -1,4 +1,4 @@
-module Test.Prover
+module Test.Prover.Tactics
     ( tests
     ) where
 
@@ -16,10 +16,10 @@ import           Language.Lexer        ()
 import           Language.Parser       ()
 import           Language.ParserM      ()
 import           Language.Syntax       (Declaration (Rule), ( ## ))
-import           Prover.ProofM         (ProofState, apply, assumptions,
-                                        emptyProofState, exact, mkProofState,
-                                        newName, runProofM, specialize, _env,
-                                        _goal)
+import           Prover.ProofM         (ProofState, emptyProofState,
+                                        mkProofState, newName, runProofM,
+                                        _context, _goal)
+import           Prover.Tactics
 import           Prover.Types          (Goal)
 
 tests :: TestTree
@@ -50,8 +50,8 @@ specializeTacticTests =
                             , ("X", Rule [] [] "X")
                             ]
                     )
-        assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hs"
-        let Just (Rule args hs c) = st ^. _env . at "Hs"
+        assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hs"
+        let Just (Rule args hs c) = st ^. _context . at "Hs"
         args @?= ["Q"]
         hs @?= ["X", "impl" ## "X" ## "Q"]
         c @?= "Q"
@@ -70,8 +70,8 @@ specializeTacticTests =
                             , ("Hs", Rule ["Q"] ["X", "impl" ## "X" ## "Q"] "Q")
                             ]
                     )
-        assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hss"
-        let Just (Rule args hs c) = st ^. _env . at "Hss"
+        assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hss"
+        let Just (Rule args hs c) = st ^. _context . at "Hss"
         args @?= []
         hs @?= ["X", "impl" ## "X" ## "Y"]
         c @?= "Y"
@@ -86,8 +86,8 @@ specializeTacticTests =
                             , ("H", Rule [] [] ("impl" ## "X" ## "Y"))
                             ]
                     )
-        assertBool "specialize result is in environment" $ isJust $ st ^. _env . at "Hss"
-        let Just (Rule args hs c) = st ^. _env . at "Hss"
+        assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hss"
+        let Just (Rule args hs c) = st ^. _context . at "Hss"
         args @?= []
         hs @?= ["impl" ## ("impl" ## "X" ## "Y") ## ("impl" ## "X" ## "Y")]
         c @?= "impl" ## "X" ## "Y"

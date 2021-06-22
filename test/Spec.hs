@@ -2,13 +2,13 @@ module Main
     ( main
     ) where
 
-import           Test.Tasty  (defaultMain, testGroup)
+import           Test.Tasty          (defaultMain, testGroup)
 
-import qualified Test.Prover as Prover (tests)
+import qualified Test.Prover.Tactics as Prover.Tactics (tests)
 
 main :: IO ()
 main =
     defaultMain
         $ testGroup "Tests"
-            [ Prover.tests
+            [ Prover.Tactics.tests
             ]
