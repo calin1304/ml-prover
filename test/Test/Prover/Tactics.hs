@@ -45,7 +45,7 @@ specializeTacticTests =
     partialSpecialization = do
         let Right (_, st) =
                 [ ("mp", Rule ["P", "Q"] ["P", "P" .-> "Q"] "Q")
-                , ("X", Rule [] [] "X")
+                , ("X", [] .|- "X")
                 ]
                 |- "Y" $ specialize ("mp" ## "X") "Hs"
         assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hs"
@@ -59,8 +59,8 @@ specializeTacticTests =
     totalSpecialization = do
         let Right (_, st) =
                 [ ("mp", Rule ["P", "Q"] ["P", "P" .-> "Q"] "Q")
-                , ("X", Rule [] [] "X")
-                , ("Y", Rule [] [] "Y")
+                , ("X", [] .|- "X")
+                , ("Y", [] .|- "Y")
                 , ("Hs", Rule ["Q"] ["X", "X" .-> "Q"] "Q")
                 ] |- "Y" $ specialize ("Hs" ## "Y") "Hss"
         assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hss"
@@ -72,7 +72,7 @@ specializeTacticTests =
     applicatioSpecialization = do
         let Right (_, st) =
                 [ ("r", Rule ["P"] ["P" .-> "P"] "P")
-                , ("H", Rule [] [] ("X" .-> "Y"))
+                , ("H", [] .|- ("X" .-> "Y"))
                 ] |- "Y" $ specialize ("r" ## "H") "Hss"
         assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hss"
         let Just (Rule args hs c) = st ^. _context . at "Hss"
@@ -87,7 +87,7 @@ exactTacticTests =
         ]
   where
     exactTest = do
-        let Right (_, st) = [("H", Rule [] [] "Y")] |- "Y" $ exact "H"
+        let Right (_, st) = [("H", [] .|- "Y")] |- "Y" $ exact "H"
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
 
 applyTacticTests :: TestTree
@@ -99,17 +99,17 @@ applyTacticTests =
         ]
   where
     noHypotheses = do
-        let result = [("H", Rule [] []  "P")] |- "P" $ apply "H" []
+        let result = [("H", [] .|- "P")] |- "P" $ apply "H" []
         case result of
             Left e -> assertFailure $ show e
             Right (_, st) -> assertBool "goal is satisfied" $ isTop $ st ^. _goal
     noMatch = do
-        let result = [("H", Rule [] [] "Q")] |- "P" $ apply "H" []
+        let result = [("H", [] .|- "Q")] |- "P" $ apply "H" []
         assertBool "fail because goal doesn't match conclusion of applied formula"
             $ isLeft result
     applicationGoal = do
         let result =
-                [("H", Rule [] [] ("P" .-> ("P" .-> "Q")))] |- "P" .-> "Q" $ apply "H" []
+                [("H", [] .|- ("P" .-> ("P" .-> "Q")))] |- "P" .-> "Q" $ apply "H" []
         case result of
             Left e  -> assertFailure $ show e
             Right _ -> undefined
@@ -134,9 +134,9 @@ proofTests =
                 exact "H3"
         let Right (_, st) =
                 [ ("mp", Rule ["P", "Q"] ["P", "P" .-> "Q"] "Q")
-                , ("X", Rule [] [] "X")
-                , ("Y", Rule [] [] "Y")
-                , ("H", Rule [] [] ("X" .-> "Y"))
+                , ("X", [] .|- "X")
+                , ("Y", [] .|- "Y")
+                , ("H", [] .|- ("X" .-> "Y"))
                 ]
                 |- "Y" $ proof
         assertBool "goal is satisfied" $ isTop $ st ^. _goal
@@ -148,9 +148,9 @@ proofTests =
                     , apply "X0" []
                     ]
         let Right (_, st) =
-                [ ("X", Rule [] [] "P")
-                , ("X0", Rule [] [] "Q")
-                , ("X1", Rule [] ["P", "Q"] "R")
+                [ ("X", [] .|- "P")
+                , ("X0", [] .|- "Q")
+                , ("X1", ["P", "Q"] .|- "R")
                 ]
                 |- "R" $ proof
         assertEqual "goal is top" "top" (st ^. _goal)
@@ -164,9 +164,9 @@ proofTests =
                         ]
                     ]
         let Right (_, st) =
-                [ ("X", Rule [] ["P"] "Q")
-                , ("X0", Rule [] ["P", "Q"] "R")
-                , ("X1", Rule [] [] "P")
+                [ ("X", ["P"] .|- "Q")
+                , ("X0", ["P", "Q"] .|- "R")
+                , ("X1", [] .|- "P")
                 ]
                 |- "R" $ proof
         assertEqual "goal is top" "top" (st ^. _goal)
@@ -190,11 +190,13 @@ singleRule :: Goal -> String -> Declaration -> ProofState
 singleRule g k v = mkProofState g $ M.singleton k v
 
 infix 5 .->
-
 (.->) :: Expr -> Expr -> Expr
 (.->) p q = "impl" ## p ## q
 
 infix 4 |-
-
 (|-) :: [(String, Declaration)] -> Goal -> ProofM () -> Either ProverError ((), ProofState)
 (|-) c g p = runProofM p (mkProofState g (M.fromList c))
+
+infix 4 .|-
+(.|-) :: [Expr] -> Expr -> Declaration
+(.|-) = Rule []
