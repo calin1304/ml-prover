@@ -2,6 +2,7 @@ module Prover.ProofM
     ( ProofM
     , ProverError (..)
     , ProofState (..)
+    , Context -- TODO: This is pretty general, could move elsewhere
     , mkProofState
     , emptyProofState
     , runProofM
