@@ -9,7 +9,7 @@ module Language.Syntax
     , Signature (..)
     , getDefinition
     , mkAttr
-    , (##)
+    , (#)
     ) where
 
 import           Data.String (IsString, fromString)
@@ -66,10 +66,10 @@ instance IsString Expr where
     fromString s = Ident s
 
 -- I'm tired of writing long names
-infixl 5 ##
+infixl 5 #
 
-(##) :: Expr -> Expr -> Expr
-(##) = Application
+(#) :: Expr -> Expr -> Expr
+(#) = Application
 
 data Signature =
     NoSignature

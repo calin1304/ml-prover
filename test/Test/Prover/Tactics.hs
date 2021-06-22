@@ -16,7 +16,7 @@ import           Language.Lexer        ()
 import           Language.Parser       ()
 import           Language.ParserM      ()
 import           Language.Syntax       (Declaration (Rule), Expr, Tactic,
-                                        ( ## ))
+                                        ( # ))
 import           Prover.ProofM         (Context, ProofM, ProofState,
                                         ProverError, emptyProofState,
                                         mkProofState, newName, runProofM,
@@ -47,7 +47,7 @@ specializeTacticTests =
                 [ ("mp", Rule ["P", "Q"] ["P", "P" .-> "Q"] "Q")
                 , ("X", [] .|- "X")
                 ]
-                |- "Y" $ specialize ("mp" ## "X") "Hs"
+                |- "Y" $ specialize ("mp" # "X") "Hs"
         assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hs"
         let Just (Rule args hs c) = st ^. _context . at "Hs"
         args @?= ["Q"]
@@ -62,7 +62,7 @@ specializeTacticTests =
                 , ("X", [] .|- "X")
                 , ("Y", [] .|- "Y")
                 , ("Hs", Rule ["Q"] ["X", "X" .-> "Q"] "Q")
-                ] |- "Y" $ specialize ("Hs" ## "Y") "Hss"
+                ] |- "Y" $ specialize ("Hs" # "Y") "Hss"
         assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hss"
         let Just (Rule args hs c) = st ^. _context . at "Hss"
         args @?= []
@@ -73,7 +73,7 @@ specializeTacticTests =
         let Right (_, st) =
                 [ ("r", Rule ["P"] ["P" .-> "P"] "P")
                 , ("H", [] .|- ("X" .-> "Y"))
-                ] |- "Y" $ specialize ("r" ## "H") "Hss"
+                ] |- "Y" $ specialize ("r" # "H") "Hss"
         assertBool "specialize result is in environment" $ isJust $ st ^. _context . at "Hss"
         let Just (Rule args hs c) = st ^. _context . at "Hss"
         args @?= []
@@ -124,8 +124,8 @@ proofTests =
   where
     proofTest = do
         let proof = do
-                specialize ("mp" ## "X") "H1"
-                specialize ("H1" ## "Y") "H2"
+                specialize ("mp" # "X") "H1"
+                specialize ("H1" # "Y") "H2"
                 -- apply "Hss"
                 --     [ [ exact "X"]
                 --     , [ exact "H"]
@@ -191,7 +191,7 @@ singleRule g k v = mkProofState g $ M.singleton k v
 
 infix 5 .->
 (.->) :: Expr -> Expr -> Expr
-(.->) p q = "impl" ## p ## q
+(.->) p q = "impl" # p # q
 
 infix 4 |-
 (|-) :: [(String, Declaration)] -> Goal -> ProofM () -> Either ProverError ((), ProofState)

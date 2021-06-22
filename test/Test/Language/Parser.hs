@@ -12,7 +12,7 @@ import           Language.Syntax  (Argument (Argument),
                                    Declaration (MetaSym, Notation, Rule),
                                    Expr (Ident), Signature (Signature),
                                    SymAttr (Arity, Binder, Folded, NotNegative),
-                                   ( ## ))
+                                   ( # ))
 
 tests :: TestTree
 tests =
@@ -35,7 +35,7 @@ expressionParserTests =
 
     applicationParserTest = actual @?= expected
       where
-        expected = Right $ ("f" ## "X" ## "Y" ## "Z") ## ("g" ## "X" ## "Y")
+        expected = Right $ ("f" # "X" # "Y" # "Z") # ("g" # "X" # "Y")
         actual = runParserM parseExpression <$> scanner "(f X Y Z) (g X Y)"
 
 declarationParserTests :: TestTree
@@ -59,7 +59,7 @@ declarationParserTests =
             runParserM parseDeclaration
                 <$> scanner "notation nu (X : SetVar) E := not (mu X (not (#subst E X (not X)))) [folded, set-binder 1 2, notNegative]"
 
-        nuExpr = "not" ## (("mu" ## "X") ## ("not" ## (("#subst" ## "E" ## "X") ## ("not" ## "X"))))
+        nuExpr = "not" # (("mu" # "X") # ("not" # (("#subst" # "E" # "X") # ("not" # "X"))))
 
     metaSymParserTest = actual @?= expected
       where
@@ -68,5 +68,5 @@ declarationParserTests =
 
     ruleParserTest = actual @?= expected
       where
-        expected = Right $ Rule ["X", "Y"] ["X", "impl" ## "X" ## Ident "Y"] "Y"
+        expected = Right $ Rule ["X", "Y"] ["X", "impl" # "X" # Ident "Y"] "Y"
         actual = runParserM parseDeclaration <$> scanner "rule mp X Y := from [X, impl X Y] derive Y"
