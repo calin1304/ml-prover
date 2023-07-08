@@ -15,28 +15,20 @@ module Prover.ProofM
     ) where
 
 import           Control.Lens                 (Lens', assign, at, modifying,
-                                               use, uses, (%=), (.=))
+                                               use, (%=))
 import           Control.Monad.Except         (Except, runExcept, throwError)
-import           Control.Monad.State          (StateT, get, runStateT)
-import           Data.Bool                    (bool)
-import           Data.Foldable                (traverse_)
+import           Control.Monad.State          (StateT, runStateT)
 import           Data.Generics.Product.Fields (field)
 import           Data.Map                     (Map)
 import qualified Data.Map                     as M (insert, toList)
 import           Data.Maybe                   (fromMaybe)
 import           GHC.Generics                 (Generic)
-import           Text.PrettyPrint             (($+$))
 import qualified Text.PrettyPrint             as PP
-import           Text.Printf                  (printf)
+import           Text.PrettyPrint             (($+$))
 
-import           Language.Syntax              (Declaration (Rule),
-                                               Expr (Application, Ident),
-                                               Tactic (Apply, Exact, Intros, Specialize),
-                                               getDefinition)
+import           Language.Syntax              (Declaration (Rule), Expr (Ident))
 import           Pretty                       (Pretty, pretty)
-import           Prover.Substitution          (applySubst, mkSubst)
 import           Prover.Types                 (Goal, Name)
-import           Utils                        (allA)
 
 
 type ProofM = StateT ProofState (Except ProverError)

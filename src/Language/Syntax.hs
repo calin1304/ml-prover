@@ -14,9 +14,11 @@ module Language.Syntax
 
 import           Data.String (IsString, fromString)
 
+-- | A ML prover source consists of multiple module definitions.
 newtype Source = Source [ModDef]
     deriving (Show)
 
+-- | Module definition.
 data ModDef = ModDef String [Declaration]
     deriving (Show)
 
@@ -63,29 +65,33 @@ data Expr =
     deriving (Eq, Show)
 
 instance IsString Expr where
-    fromString s = Ident s
+    fromString = Ident
 
 -- I'm tired of writing long names
 infixl 5 #
 
+-- | Operator which creates the application of second expression to the first one.
 (#) :: Expr -> Expr -> Expr
 (#) = Application
 
+-- | Symbol signature.
 data Signature =
     NoSignature
   | Signature [Argument]
     deriving (Eq, Show)
 
+-- | Symbol argument.
 newtype Argument = Argument String
     deriving (Eq, Show)
 
+-- | Symbol attributes.
 data SymAttr =
     Folded
   | Substitution
   | Binder
   | SetBinder
   | NotNegative
-  | Arity Int
+  | Arity Int -- ^ Symbol arity. NOTE: How is this related to `Signature` data type?
     deriving (Eq, Show)
 
 mkAttr :: String -> [Int] -> SymAttr

@@ -1,3 +1,5 @@
+-- This module implements pretty printing of special symbols.
+
 module Print
     ( top
     , vdash

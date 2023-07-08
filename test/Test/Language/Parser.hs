@@ -12,7 +12,7 @@ import           Language.Syntax  (Argument (Argument),
                                    Declaration (MetaSym, Notation, Rule),
                                    Expr (Ident), Signature (Signature),
                                    SymAttr (Arity, Binder, Folded, NotNegative),
-                                   ( # ))
+                                   (#))
 
 tests :: TestTree
 tests =
@@ -23,7 +23,7 @@ tests =
 
 expressionParserTests :: TestTree
 expressionParserTests =
-    testGroup "expression parser"
+    testGroup "parseExpression"
         [ testCase "id" idParserTest
         , testCase "application" applicationParserTest
         ]
@@ -40,10 +40,10 @@ expressionParserTests =
 
 declarationParserTests :: TestTree
 declarationParserTests =
-    testGroup "declaration parser"
+    testGroup "parseDeclaration"
         [ testCase "rule" ruleParserTest
-        , testCase "metaSymParser" metaSymParserTest
-        , testCase "notationParser" notationParserTest
+        , testCase "meta-symbol" metaSymParserTest
+        , testCase "notation" notationParserTest
         ]
   where
     notationParserTest = actual @?= expected

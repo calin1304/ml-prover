@@ -12,19 +12,19 @@ $ascdigit  = 0-9
 $digit     = [$ascdigit]
 $ascsymbol = [\!\$\%\&\*\+\.\/\<\=\>\?\@\\\^\|\-\~]
 $symbol    = [$ascsymbol] # [$special \_\:\"\']
-$large     = [A-Z]
-$small     = [a-z]
-$alpha     = [$small $large]
-$graphic   = [$small $large $symbol $digit $special \:\"\']
+$upper     = [A-Z]
+$lower     = [a-z]
+$alpha     = [$lower $upper]
+$graphic   = [$lower $upper $symbol $digit $special \:\"\']
 $idchar    = [$alpha $digit \'\-\_]
 
 @tacticsIds = intros|specialize|apply|exact
 @keyword = @tacticsIds|module|endmodule|imports|meta\-symbol|notation|rule|from|derive|lemma|proof|qed|as|SetVar|Var
 @reservedop = ":="
-@ident  = [$large $small \_] $idchar*
-@decimal     = $digit+
+@ident = [$upper $lower \_] $idchar*
+@decimal = $digit+
 
-$cntrl   = [$large \@\[\\\]\^\_]
+$cntrl   = [$upper \@\[\\\]\^\_]
 @ascii   = \^ $cntrl | NUL | SOH | STX | ETX | EOT | ENQ | ACK
      | BEL | BS | HT | LF | VT | FF | CR | SO | SI | DLE
      | DC1 | DC2 | DC3 | DC4 | NAK | SYN | ETB | CAN | EM
@@ -90,11 +90,11 @@ lexError s = do
     showPosn (AlexPn _ line col) = show line ++ ':': show col
 
 scanner str =
-    runAlex str $
-        let loop = do
-                tok@(L _t cl _) <- alexMonadScan
-                if cl == LEOF then pure [] else (cl :) <$> loop
-         in loop
+    runAlex str loop
+  where
+    loop = do
+        tok@(L _t cl _) <- alexMonadScan
+        if cl == LEOF then pure [] else (cl :) <$> loop
 
 alexEOF :: Alex Lexeme
 alexEOF = pure $ L undefined LEOF ""

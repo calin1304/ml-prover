@@ -13,8 +13,8 @@ let
 in
   pkgs.mkShell {
     buildInputs = with pkgs; [
-      haskell.packages.ghc884.hlint
-      haskell.packages.ghc884.stylish-haskell
-      haskell.packages.ghc884.haskell-language-server
+      haskell.packages.ghc902.hlint
+      haskell.packages.ghc902.stylish-haskell
+      /* haskell.packages.ghc884.haskell-language-server */
     ];
   }

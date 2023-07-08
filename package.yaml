@@ -49,11 +49,11 @@ build-tools:
 library:
   source-dirs: src
 
-ghc-options:
-- -Wall
-- -Werror
-- -Wmissing-export-lists
-- -Wmissing-import-lists
+# ghc-options:
+# - -Wall
+# - -Werror
+# - -Wmissing-export-lists
+# - -Wmissing-import-lists
 
 executables:
   ml-parser-exe:
